@@ -1,0 +1,179 @@
+% Package for creating front pages for project theses.
+% Implemented by Martin Helsø (martibhe@math.uio.no).
+% Version 2019-02-14.
+
+
+\NeedsTeXFormat{LaTeX2e}[1994/12/01]
+\ProvidesPackage{projectfp}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% OPTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Language:
+\DeclareOption{american}{\def\PFP@lang{eng}}
+\DeclareOption{english}{\def\PFP@lang{eng}}
+\DeclareOption{UKenglish}{\def\PFP@lang{eng}}
+\DeclareOption{USenglish}{\def\PFP@lang{eng}}
+\DeclareOption{norsk}{\def\PFP@lang{bm}}
+\DeclareOption{nynorsk}{\def\PFP@lang{nn}}
+
+
+%% COURSE:
+\DeclareOption{NoCourse}
+{
+    \def\PFP@course@eng
+    {
+        AS-NAT19
+        \textthreequartersemdash\
+        No Course
+    }
+}
+\DeclareOption{AppProjI}
+{
+    \def\PFP@course@eng
+    {
+        AS-NAT19
+        \textthreequartersemdash\
+        Applied Project II
+    }
+}
+\DeclareOption{AppProjII}
+{
+    \def\PFP@course@eng
+    {
+        AS-NAT
+        \textthreequartersemdash\
+        Applied Project II
+    }
+}
+
+
+
+%% Standard options:
+\ExecuteOptions{english}
+\ExecuteOptions{AppProjI}
+\ProcessOptions*
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PACKAGES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\RequirePackage{calc}
+\RequirePackage{graphicx}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{textcomp}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TITLE PAGE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\@ifclassloaded{memoir}
+{
+    \newcommand{\projectfrontpage}
+    {
+        \begin{titlingpage}
+            \calccentering{\unitlength}
+            \begin{adjustwidth*}{\unitlength}{-\unitlength}
+                \printtitle
+            \end{adjustwidth*}
+        \end{titlingpage}
+    }
+}
+{
+    \newcommand{\projectfrontpage}
+    {
+        \begin{titlepage}
+            \printtitle
+        \end{titlepage}
+    }
+}
+
+\newcommand{\printtitle}
+{
+    \renewcommand{\sfdefault}{lmss}
+    \sffamily
+    \fontsize{15}{18pt}
+    \selectfont
+    \raggedright
+
+    \vspace*{-5mm}
+    \includegraphics[width=0.5\textwidth]{front-page/logo}
+
+    \vskip18mm
+
+    {
+        \fontsize{21}{24pt}
+        \selectfont
+        \bfseries
+        \boldmath
+        \@title
+    }
+
+    \vskip17mm
+
+    {
+        \bfseries
+        \csname PFP@course@\PFP@lang\endcsname
+    }
+
+    \vskip9mm
+    
+    {%
+        \ifdefined \authors
+            \authors
+        \else
+            \@author
+        \fi
+    }
+    
+    \vskip9mm
+
+    \csname PFP@supervisor@\PFP@lang\endcsname:
+    \PFP@supervisor@name
+
+    \vfill
+
+%    \begin{minipage}[c][26mm]{28mm}
+%        \hspace*{1mm}
+%        \includegraphics[width = 26mm]{projectfp-images/projectfp-apollon}
+%    \end{minipage}%
+    \begin{minipage}[c]{\textwidth - 28mm}
+        \hfill
+        \bfseries
+        \the\year
+    \end{minipage}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SUPERVISOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\supervisor}[1]{\def\PFP@supervisor@name{#1}\checknextarg}
+\newcommand{\checknextarg}
+{
+    \@ifnextchar{\bgroup}
+    {
+        \def\PFP@supervisor@eng{Supervisors}
+        \gobblenextarg
+    }{}
+}
+\newcommand{\gobblenextarg}[1]
+{
+    \@ifnextchar{\bgroup}
+    {
+        \g@addto@macro\PFP@supervisor@name{, #1}
+        \gobblenextarg
+    }
+    {
+        \g@addto@macro\PFP@supervisor@name
+        { \csname PFP@and@\PFP@lang\endcsname\ #1}
+    }
+}
+\newcommand{\PFP@supervisor@name}{}
+\newcommand{\PFP@supervisor@eng}{Supervisor}
+\newcommand{\PFP@and@eng}{and}
+
+
+
+\endinput

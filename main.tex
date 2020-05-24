@@ -223,7 +223,7 @@ These two features seem to be good indicators of the presence of large errors in
 
 
 \subsection{Complete dataset}
-The second and the main dataset that we use in this project is more complete. This dataset includes the multipath error as the outcome variable, instead of the whole pseudorange error that was used in the first dataset. This multipath error is estimated using an isolation method that tries to estimate all the other error sources in the pseudorange to obtain only the remaining multipath error \cite{matera_chatacterization_2019}. This second dataset also includes more features, which are presented next.
+The second and the main dataset that we use in this project is more complete. This dataset includes the multipath error as the outcome variable, instead of the whole pseudorange error that was used in the first dataset. This multipath error is estimated using an isolation method that tries to estimate all the other error sources in the pseudorange to obtain only the remaining multipath error \cite{matera_chatacterization_2019}. This second dataset contains more than 78000 examples and it also includes more features, which are presented next:
 
 \begin{itemize}
     \item \textbf{CN0:} Carrier-to-Noise-Density Ratio of the signal.
@@ -233,11 +233,7 @@ The second and the main dataset that we use in this project is more complete. Th
     \item \textbf{MTHR:} Maximum topographic height on the right side of the vehicle.
 \end{itemize}
 
-Figures \ref{fig:mpn_cn0} to \ref{fig:mpn_daz} represent the distribution of the multipath error with respect to the different features in this dataset. As we observer in the previous dataset, the CN0 and elevation features are also representatives of the multipath error. The new features regarding the topography data also show a correlation with the multipath error (see Figures  \ref{fig:mpn_mthl} and \ref{fig:mpn_mthr}). This is the expected because an scenario with taller buildings leads to higher multipath errors due to a larger amount of reflections. Finally, the differential azimuth also seems to be correlated with the multipath error. Figure \ref{fig:mpn_daz} shows that the multipath error is larger when the satellites is located at both sides of the vehicle, i.e. around 90 and 270 degrees. This is also an expected behavior because the larger obstacles will be usually located at the sides of the vehicle instead of at the front or back, where there is the road.
-
-After this analysis, we expect that the use of this features should improve the accuracy in the estimation of the multipath error, with respect to other simpler methods.
-
-\begin{figure}[hb]
+\begin{figure}[htb]
   \centering
   \begin{minipage}[b]{0.49\textwidth}
     \includegraphics[width=\textwidth]{data-analysis/mpn_cn0.png}
@@ -252,7 +248,7 @@ After this analysis, we expect that the use of this features should improve the 
   \end{minipage}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[htb]
   \centering
   \begin{minipage}[b]{0.49\textwidth}
     \includegraphics[width=\textwidth]{data-analysis/mpn_maxtopol.png}
@@ -274,10 +270,35 @@ After this analysis, we expect that the use of this features should improve the 
     \label{fig:mpn_daz}
 \end{figure}
 
-\section{Data preparation}
+Figures \ref{fig:mpn_cn0} to \ref{fig:mpn_daz} represent the distribution of multipath error with respect to the different features in this dataset. As we observed in the previous dataset, the CN0 and elevation features are also representatives of the multipath error. Additionally, the new features regarding the topography data also show a correlation with the multipath error (see Figures  \ref{fig:mpn_mthl} and \ref{fig:mpn_mthr}). This is the expected because an scenario with taller buildings leads to higher multipath errors due to a larger amount of reflections. Finally, the differential azimuth also seems to be correlated with the multipath error. Figure \ref{fig:mpn_daz} shows that the multipath error is larger when satellites are located at both sides of the vehicle, i.e. around 90 and 270 degrees. This is also an expected behavior because the larger obstacles will be usually located at the sides of the vehicle instead of at the front or back, where there is the road.
+
+After this analysis, we expect that the addition of this features into the algorithm will improve the accuracy in the estimation of the multipath error, with respect to other simpler methods.
+
+
+
+\section{Data preparation}\label{DataPrep}
 Before applying a regression algorithm is usually recommended to do some data preparation. First, it is important to check for invalid data and remove it. For both datasets used in this project, we have cleaned the data of examples that had NaN values and other examples that had other invalid values, such as a CN0 of 0 dB-Hz. Also, we have removed the outliers by setting two threshold of [-100, 300] meters as minimum and maximum values for the pseudorange and multipath errors.
 
-Once the datasets are clean of invalid values and outliers, we divide each one of them into 3 subsets. The first is the Training Set and it contains the 60\% of the whole set. This data is the one that is used to obtain the regression parameters with the different algorithms. The second subset is the Validation Set, which contains a 20\% of the remaining data. The data in the Validation Set is used for comparing different configurations of the same algorithm. This is specially useful and recommended when dealing with neural networks \cite{aggarwal_neural_2018}, since it is usually needed to compare between different architectures and configurations. Finally, the last is the Test Set, that contains the remaining 20\% of the data. This set is used as new data to test the performance of the algorithms with unseen examples. This process is usually referred to as \textit{generalization}. The main purpose of this splitting of the data is for the algorithms to generalize \textit{well}, this is obtaining an equivalent performance when dealing with new data than when dealing with the Train Set.
+Once the datasets are clean of invalid values and outliers, we divide each one of them into 3 subsets. The first is the Training Set and it contains the 60\% of the whole set. This data is the one that is used to obtain the regression parameters with the different algorithms. The second subset is the Validation Set, which contains a 20\% of the remaining data. The data in the Validation Set is used for comparing different configurations of the same algorithm. This is specially useful and recommended when dealing with neural networks \cite{aggarwal_neural_2018}, since it is usually needed to compare between different architectures and configurations. Finally, the last is the Test Set, that contains the remaining 20\% of the data. This set is used as new data to test the performance of the algorithms with unseen examples. This process is usually referred to as \textit{generalization}. The main purpose of this splitting of the data is for the algorithms to generalize \textit{well}, this is obtaining an equivalent performance when dealing with new data than when dealing with the Training Set.
+
+Finally, the last step in the data preparation is the \textit{feature scaling}. Two of the regression algorithms that have been implemented, namely the gradient descent and the neural network, require having features with similar magnitudes, usually they accept up to a power of ten between features. A more detailed explanation for this necessity is detailed later in chapter \ref{ch:fitting} but the main reason is that having features with different orders of magnitude usually hinders the convergence of the algorithms. The feature scaling is performed by normalizing the features as
+
+\begin{equation}
+    \btheta_{i, train}^{norm} = \frac{\btheta_{i, train} - \bar{\btheta}_{i, train}}{\sigma_{i, train}}
+\end{equation}
+
+where $\btheta_{i, test}$ denotes the $i$-th feature in the Training Set and it has a measured mean $\bar{\btheta}_{i, test}$ and standard deviation $\sigma_{i, test}$. 
+
+Once the parameters of the model have been obtained by the regression algorithm, it is important to normalize the data used for evaluation as well. These datasets, namely the Validation and Test sets, must be normalized with the mean and standard deviations obtained with the Training Set normalization in order to be consistent. Then we obtain the normalized datasets as:
+
+\begin{equation}
+    \btheta_{i, val}^{norm} = \frac{\btheta_{i, val} - \bar{\btheta}_{i, train}}{\sigma_{i, train}}
+\end{equation}
+
+\begin{equation}
+    \btheta_{i, test}^{norm} = \frac{\btheta_{i, test} - \bar{\btheta}_{i, train}}{\sigma_{i, train}}
+\end{equation}
+
 
 
 %==================================================================================================================
@@ -445,7 +466,7 @@ Finally, this procedure is repeated for the nonlinear WLS regression method, in 
 
 \section{Gradient descent}
 
-Gradient descent is an optimization algorithm which has become very popular in the last years as it is a crucial algorithm for training machine learning models. It is present in most Artificial Intelligence (AI) systems which are being developed these days. However, its origin dates back to the 19th century, when it was developed by Lous Augustin Cauchy in his \textit{Compte Rendu à l’Académie des Sciences} of October 18, 1847 \cite{cauchy}.
+Gradient descent is an optimization algorithm which has become very popular in the last years as it is a crucial algorithm for training machine learning models. It is present in most Artificial Intelligence (AI) systems that are being developed these days. However, its origin dates back to the 19th century, when it was developed by Lous Augustin Cauchy in his \textit{Compte Rendu à l’Académie des Sciences} of October 18, 1847 \cite{cauchy}.
 
 First of all, it is important to recall the main idea behind the regression technique detailed in section \ref{matlabfit}. The objective was to minimize a given cost function, also known as hypothesis or simply $h$, in order to find the parameters such that the value of the cost function evaluated at those parameters corresponds to the global minima of the function. As the cost function measures the accuracy of the hypothesis of our model to predict the output variable, then finding the minimum of $h$ implicates that the error made by the prediction model is the lowest. Hence, it is very interesting to develop advanced techniques in order to optimize this minimization problem. 
 
@@ -455,33 +476,117 @@ The main characteristic of a convex function is that there exists a stationary p
 
 However, the algorithm may encounter a type of functions, also known as non-convex, which presents other minimums (local minima) besides the global minima. So the algorithm may have to deal with multiple minimum points and, therefore, multiple equations to solve, which correspond to a derivative equal to zero for each point. Besides the local minima, there also other points which can fulfill the same premise, so the system of equations can become extremely large. This can result in a serious problem for optimization algorithms, not only in terms of computational efficiency, but also because they can get stuck in a local minima and may never find the global one. In consequence, it is essential to find a solution for the non-convex functions. 
 
-The GD method aims to solve this problem by presenting an intuitive reasoning in which it takes advantage of the information provided by the computation of the derivative (the slope) in order to find the local minimums of the function. 
-The idea is to start by evaluating the slope at the current position in order to determine the greatest slope, then move forward in that direction in which the slope is maximum according to the current position and, finally, stop at a new position and evaluate again. This is an iterative process which continues until convergence is reached. 
+The GD method aims to solve this problem by presenting an intuitive reasoning in which it takes advantage of the information provided by the computation of the derivative (the slope) in order to find the local minimums of the function. The idea is to start by evaluating the slope at the current position in order to determine the greatest slope, then move forward in that direction in which the slope is maximum according to the current position and, finally, stop at a new position and evaluate again. This is an iterative process which continues until convergence is reached. 
 
-In a more formal way, the GD computes the partial derivatives of each parameter at a specific point and the values obtained will provide information of the slope in the corresponding axis of each parameter. The set of all the partial derivatives result in a vector that indicates the direction in which the slope increases. This vector is referred to as the gradient $\nabla f$. 
+In a more formal way, the GD computes the partial derivatives of each parameter at a specific point and the values obtained will provide information of the slope in the corresponding axis of each parameter. The set of all the partial derivatives result in a vector that indicates the direction in which the slope increases. This vector is referred to as the gradient $\nabla J$. 
 
-For example, considering two input parameters $\theta_{1}$ and $\theta_{2}$ and the error $e$ as the output, then the gradient expression is as follows:
-
+Considering first a simple example using two input parameters $\btheta = [\theta_{0}, \theta_{1}]^T$ and the error $e$ as the output, then the gradient expression is as follows:
 \begin{equation}
-    \nabla f = \begin{bmatrix}
-                    \pdv{e}{\theta_{1}} \\
-                    \pdv{e}{\theta_{2}} 
-                \end{bmatrix}
+    \nabla J(\theta_{0},\theta_{1}) = \pdv{}{\theta} J(\theta_{0},\theta_{1}) = \begin{bmatrix}
+                                                                                \pdv{e}{\theta_{0}} &                                 \pdv{e}{\theta_{1}}\\
+                                                                                \end{bmatrix}^T
 \end{equation}
-
-As the objective is to descent to the minimum point, then $\nabla f$ must be considered negative. 
+where $J(\theta_{0},\theta_{1})$ refers to the cost function as a function of the parameters $\theta_{0}$ and $\theta_{1}$ previously defined. As the objective is to descent to the minimum point, then $\nabla J$ must be considered negative. It is also important to remark that the training parameters are usually initially set at a random point before starting the iteration process.
 
 So, the resulting the computation of the parameters is
-
-\begin{equation}
-    \theta \coloneqq \theta - \alpha \nabla f
+\begin{equation}\label{eq:gdeq}
+\begin{split}
+    &\mbox{repeat until convergence}\{\\
+    &\theta \coloneqq \theta - \alpha \nabla J(\theta_{0},\theta_{1})\\
+&\}
+\end{split}
 \end{equation}
 
-where $\alpha$ corresponds to the learning rate. This factor measures the magnitude of the gradient's impact on the parameters update at each iteration. It defines the longitude of the step the algorithm takes to advance in a certain direction at each iteration. 
+where $\alpha$ corresponds to the learning rate. This factor measures the magnitude of the gradient's impact on the parameters update at each iteration. It defines the longitude of the step the algorithm takes to advance in a certain direction at each iteration. Therefore, it is crucial to set a proper value, otherwise, we might have to face the following situations:
+\begin{itemize}
+    \item  If $\alpha$ is too low, then the GD can become slow and take more time to converge.
+    \item  If $\alpha$ is too high, then the GD can overshoot the minimum and may fail to converge or even diverge.  
+\end{itemize}
 
-This process is computed iteratively until the algorithm reaches a location where the variation of the cost is low, so the slope is close to zero and it can be assumed that a minimum if found.
+Nevertheless, an alleviating aspect regarding $\alpha$ is that there is no need to decrease the factor over time. By setting a constant learning rate, we can notice that when the algorithm approaches to a minimum, the gradient becomes smaller as it tends to 0. So, the step taken becomes automatically smaller. Because of that, the right initilization of $\theta$ will determine which minimum the algorithm reaches. 
 
-It is important to remark that the training parameters are usually initially set at a random point before starting the iteration process.
+As we have mentioned, this process is computed iteratively until the algorithm reaches a location where the variation of the cost is low, so the slope is close to zero and it can be assumed that a minimum is found. From equation \eqref{eq:gdeq}, it can be observed that all the parameters must be updated simultaneously, given that $\nabla J$ depends on all of them. Not applying this practice could lead to large errors due to the mixed use of parameters computed in different iterations. 
+
+Focusing on our case, the GD algorithm implemented in this project takes at least two features into consideration, so the following mathematical expression are based on a multivariate Gradient Descent.  
+
+Given a $n$ number of features, first it is necessary to define the hypothesis form. In our case, it is expressed as a polynomial model of degree $m$. To obtain the terms of our polynomial hypothesis, a function called \texttt{mapFeatures}  has been developed to perform combination samplings with repetition according to $n$ and $m$. 
+
+This can be better understood with an example. For instance, given 2 features ($n$ = 2) and a polynomial model of degree 2 ($m$ = 2), then the final expression of the hypothesis is:
+\begin{equation}\label{eq:gdH}
+\begin{split}
+    h_{\theta}(x) = \theta_{0} + \theta_{1}x_{1} + \theta_{2}x_{2} + \theta_{3}x^{2}_{1} + \theta_{4}x_{1}x_{2} + \theta_{5}x^{2}_{2}\\
+\end{split}
+\end{equation}
+
+From a matrix approach, this is equivalent to express
+\begin{equation}\label{eq:gdHmatrix}
+\begin{split}
+    h_{\theta} = \theta^{T}x\\
+\end{split}
+\end{equation}
+
+In this formulation, $x = [x_0,x_1, x_2,...x_n]^{T}$ corresponds to the input features contained in a vector of dimensions $(n+1)x1$ and $\theta$ are the parameters to be estimated contained in a column vector of $(n+1)x1$. $x_0^{(i)}$ is equal to 0 for all the training examples of the set. In consequence, as the number of features and degree of the polynomial increases, more complex hypothesis are obtained.  
+
+Once the hypothesis is established, the cost function is defined as
+\begin{equation}\label{eq:gdcost}
+\begin{split}
+    J(\theta) = \frac{\sum\limits_{i=1}^{m} ((\sum\limits_{j=1}^{n}\theta_{j}x_{j}^{(i)}) - y^{(i)})^{2}}{2m} = \frac{\sum\limits_{i=1}^{m}(\theta^{T}x^{(i)} - y^{(i)})^{2}}{2m}\\
+\end{split}
+\end{equation}
+
+where $m$ is the number of training examples, $n$ is the number of features, $x^{(i)}$ is the input feature of the $i$th training example and $y^{(i)}$ is the observed point for that training example. 
+
+Equation \eqref{eq:gdcost} can also be formulated using matrices such that
+\begin{equation}\label{eq:gdcostmatrix}
+\begin{split}
+    J(\theta) = \frac{(\textbf{X}\theta - y)^{T}(\textbf{X}\theta - y)}{2m}\\
+\end{split}
+\end{equation}
+where $\textbf{X}$ is the matrix containing all the $x$-term combinations of the hypothesis for every training example.
+
+After that, we can proceed to compute the parameters
+\begin{equation}\label{eq:gdtheta}
+\begin{split}
+    &\mbox{repeat until convergence}\{\\
+    &\theta_{j} \coloneqq \theta_{j} - \frac{\alpha}{m} \sum\limits_{i=1}^{m}(h_{\theta}(x^{(i)}) -  y^{(i)})x_{j}^{(i)}\\
+&\}
+\end{split}
+\end{equation}
+where $x_{j}^{(i)}$ is the value of the feature $j$ in the $i$-th training example and the rest of the variables remain the aforesaid definition. 
+
+For the matrix expression of $\theta$, we obtain that
+\begin{equation}\label{eq:gdthetaMatrix}
+\begin{split}
+    \theta_{j} = \theta_{j} - \frac{\alpha}{m}\textbf{X}^T(\textbf{X}\theta - y)\\
+\end{split}
+\end{equation}
+
+The term $\textbf{X}^T(\textbf{X}\theta - y)$ corresponds to the error between the observed data and our prediction.
+
+Regarding the implementation of the GD, there are many different ways. However, we decided to implement a \textit{Batch} Gradient Descent, which consists in taking the full set of training examples at each iteration for computational efficiency. This practice has been applied in the code by implementing the matrix formulation previously presented in equations \eqref{eq:gdHmatrix}, \eqref{eq:gdcostmatrix} and \eqref{eq:gdthetaMatrix}.
+
+Another fundamental aspect which must be taken into account during the implementation is the feature scaling. In terms of unconstrained optimization, a problem is said to be \textit{poorly scaled} if changes to a particular feature, for example $\theta_{1}$, in a certain direction produce much larger errors in $J(\theta_{0},\theta_{1})$ than changes to another features, such as $\theta_{2}$ \cite{numericalopt}. So, poor scaling is due to high sensitivity of the hypothesis to small changes in certain features and low sensitivity to variations in other features. 
+
+\begin{figure}[hbt]
+    \centering
+    \includegraphics{fitting/PoorScaling_GradDesc.PNG}
+    \caption{Poorly scaled and well scaled problems, and performance of the gradient descent direction \cite{numericalopt}.}
+    \label{fig:scaling_gd}
+\end{figure}
+
+Figure \ref{fig:scaling_gd} presents two different contour plots for the cost function, where the top one is poorly scaled and the bottom one is well scaled. As it can be noticed in the top one, the gradient descent does not work properly. As it calculates the Euclidean distance between points, features with wider range of values will will have a greater impact on the distance, which will lead the cost functions to be dominated by these features. In consequence, we obtain this type of ellipsoid-shaped contours, where the algorithm would oscillate several times back and forth, taking a long time to find the minimum and, thus, converge. On the other side, observing the bottom plot, we can see that the well-scaled problem presents a bowl-shaped contour plot, which lets the GD algorithm to work perform much better and work efficiently.  
+
+As we have seen, GD algorithm is very sensitive to poor scaling \cite{numericalopt}, so the idea behind \textit{feature scaling} is to define all the features involved in our optimization problem in a similar scale in order to achieve a more balanced solution. The method is based on applying normalization and standardization techniques to the range of the features. This process has been already detailed in section \ref{DataPrep}. 
+
+
+
+
+
+%%% PERFORMANCE: analysis of j cost plot and add: The most common practice when implementing the algorithm is to try different values of $\alpha$ in order to see which results in a better performance. 
+
+
+%%%%Feature scaling must be added??? or is already explained in data analysis
+
 
 
 
@@ -635,6 +740,8 @@ The other defining characteristic of a neural network is the activation function
 %=================================================================================================================================================
 
 \chapter{Conclusions}\label{ch:conclusions}
+In the last years, a better estimation of the pseudorange errors and an increase in the use of GNSS on urban environments has raised the interest in multipath prediction. Due to its nature, this source of error is usually really difficult to estimate as it depends a lot on the obstacles that a signal may encounter. 
+
 
 \clearpage
 \printbibliography

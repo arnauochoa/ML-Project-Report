@@ -162,9 +162,11 @@ In addition to the coordinate collaboration of multiple railway companies, railw
 
 In order to support this work, ENAC is collecting its own data within the complex urban environments that the CLUG project is addressing by using the "Jumpy" research vehicle of the institution.
 
-As part of the work developed by ENAC, this project aims to contribute to the development of different regression techniques to generate a model for the local errors. Different fitting algorithms have been implemented for this modelling: a Matlab fitting function, Gradient Descent (GD) and Neural Networks (NN). Each of them will be further detailed in the following chapters. 
+As part of the work developed by ENAC, this project aims to contribute to the development of different regression techniques to generate a model for the local errors. Concretely, the objective of this project is to develop a regression algorithm capable of estimating the effect of the multipath error from data that can be obtained in real-time. The main goal is to test if this regression can be performed with a Neural Network and how its performance compares to other regression algorithms, namely the fitting tool provided by Matlab\footnote{https://es.mathworks.com/help/curvefit/fit.html} and the Gradient Descent method. Each of them will be further detailed in the following chapters. 
 
-% search references of the use of neural networks for estimating the quality of the signal (multipath, overall error, etc)
+Since Neural Networks techniques are relatively recent, not many applications have been done in the field of GNSS and even less have been proposed for multipath detection. Munin et al. propose the use of convolutional neural networks to estimate the presence of multipath error from an image representation of the raw data obtained from the correlator in \cite{munin_convolutional_2019}. Quan et al. follow another approach in \cite{quan_convolutional_2018}, where they perform classification of the signals in terms of multipath presence applying techniques of feature extraction. In our case, we are using a feedforward neural network to estimate the magnitude of the multipath error in a measured pseudorange from various indicators such as the signal power or the satellite elevation relative to the receiver.
+
+In this document we will start in chapter \ref{ch:data_analysis} by analyzing the data that will be later used. There we will also explain how we prepared the data so that it can help the performance of the algorithms and the analysis of the results. Later, in chapter \ref{ch:fitting} we detail the algorithms that we have implemented to perform the regression. The results are shown and analyzed in chapter \ref{ch:results}. Finally, the conclusions are drawn in chapter \ref{ch:conclusions}.
 
 %%% todo: resume of what are we going to do mentioning where it is going to be explain:
 %%%% Ex: Throughout this document we will analyse.... blablabla in chapter 1.... sth like this
@@ -302,7 +304,7 @@ Once the parameters of the model have been obtained by the regression algorithm,
 
 
 %==================================================================================================================
-\chapter{Fitting}\label{ch:fitting}
+\chapter{Regression algorithms}\label{ch:fitting}
 
 \section{MATLAB fitting}\label{matlabfit}
 
@@ -474,7 +476,16 @@ Before expatiating upon GD, it is necessary to introduce some mathematical conce
 
 The main characteristic of a convex function is that there exists a stationary point at which the function's derivative is zero, assuming that this function is differentiable. In a very informal way, at this point, the slope of function is zero, so it neither increases or decreases. In addition, there is another property which states that, in case of finding a minimium point in the function, it is in fact a global minimum. That is to say that there are no other points located below that this one on the function. 
 
-However, the algorithm may encounter a type of functions, also known as non-convex, which presents other minimums (local minima) besides the global minima. So the algorithm may have to deal with multiple minimum points and, therefore, multiple equations to solve, which correspond to a derivative equal to zero for each point. Besides the local minima, there also other points which can fulfill the same premise, so the system of equations can become extremely large. This can result in a serious problem for optimization algorithms, not only in terms of computational efficiency, but also because they can get stuck in a local minima and may never find the global one. In consequence, it is essential to find a solution for the non-convex functions. 
+However, the algorithm may encounter a type of functions, also known as non-convex, which presents other minimums (local minima) besides the global minima, as it is depicted in figure \ref{fig:Minimas}.
+
+\begin{figure}[hbt]
+    \centering
+    \includegraphics[width=0.6\textwidth]{fitting/Local-and-Global-minima_W640.jpg}
+    \caption{Local and Global minima}
+    \label{fig:Minimas}
+\end{figure}
+
+In this case, the algorithm may have to deal with multiple minimum points and, therefore, multiple equations to solve, which correspond to a derivative equal to zero for each point. Besides the local minima, there also other points which can fulfill the same premise, so the system of equations can become extremely large. This can result in a serious problem for optimization algorithms, not only in terms of computational efficiency, but also because they can get stuck in a local minima and may never find the global one. In consequence, it is essential to find a solution for the non-convex functions. 
 
 The GD method aims to solve this problem by presenting an intuitive reasoning in which it takes advantage of the information provided by the computation of the derivative (the slope) in order to find the local minimums of the function. The idea is to start by evaluating the slope at the current position in order to determine the greatest slope, then move forward in that direction in which the slope is maximum according to the current position and, finally, stop at a new position and evaluate again. This is an iterative process which continues until convergence is reached. 
 
@@ -565,11 +576,11 @@ The term $\textbf{X}^T(\textbf{X}\theta - y)$ corresponds to the error between t
 
 Regarding the implementation of the GD, there are many different ways. However, we decided to implement a \textit{Batch} Gradient Descent, which consists in taking the full set of training examples at each iteration for computational efficiency. This practice has been applied in the code by implementing the matrix formulation previously presented in equations \eqref{eq:gdHmatrix}, \eqref{eq:gdcostmatrix} and \eqref{eq:gdthetaMatrix}.
 
-Another fundamental aspect which must be taken into account during the implementation is the feature scaling. In terms of unconstrained optimization, a problem is said to be \textit{poorly scaled} if changes to a particular feature, for example $\theta_{1}$, in a certain direction produce much larger errors in $J(\theta_{0},\theta_{1})$ than changes to another features, such as $\theta_{2}$ \cite{numericalopt}. So, poor scaling is due to high sensitivity of the hypothesis to small changes in certain features and low sensitivity to variations in other features. 
+Another fundamental aspect which must be taken into account during the implementation is the feature scaling. In terms of unconstrained optimization, a problem is said to be \textit{poorly scaled} if changes to a particular feature, for example $x_{1}$, in a certain direction produce much larger errors in $h_\theta(x)$ than changes to another features, such as $x_{2}$ \cite{numericalopt}. So, poor scaling is due to high sensitivity of the hypothesis to small changes in certain features and low sensitivity to variations in other features. 
 
 \begin{figure}[hbt]
     \centering
-    \includegraphics{fitting/PoorScaling_GradDesc.PNG}
+    \includegraphics[width=0.6\textwidth]{fitting/PoorScaling_GradDesc.PNG}
     \caption{Poorly scaled and well scaled problems, and performance of the gradient descent direction \cite{numericalopt}.}
     \label{fig:scaling_gd}
 \end{figure}
@@ -578,28 +589,11 @@ Figure \ref{fig:scaling_gd} presents two different contour plots for the cost fu
 
 As we have seen, GD algorithm is very sensitive to poor scaling \cite{numericalopt}, so the idea behind \textit{feature scaling} is to define all the features involved in our optimization problem in a similar scale in order to achieve a more balanced solution. The method is based on applying normalization and standardization techniques to the range of the features. This process has been already detailed in section \ref{DataPrep}. 
 
+Once the algorithm is implemented, it is time to validated it and evaluate its performance. To accomplish this, a common practice is to plot the cost function $J(\theta)$ versus the number of iterations. Displaying the evolution of the cost function over time can help to see if the algorithm is working properly and check the convergence of the GD. The number of iterations required to converge can vary depending on the nature of the problem, however, convergence must be met. Therefore, if $J(\theta)$ decreases over iterations, then we can ensure a good performance of the GD. Otherwise, if $J(\theta)$ increases or presents an irregular shape, the GD does not works correctly. Sometimes, this problem can be easily solved by setting a smaller $\alpha$. The most common practice when implementing the algorithm is to try different values of $\alpha$ in order to see which results in a better performance. 
 
+Finally, there is a last point which is important to remark. So far, this project has described two different approaches to solve the same regression problem. The first method, detailed in section \ref{matlabfit}, presented a solution that requires the computation of equation \eqref{eq:estimatorLS}, also referred to as normal equation. The advantage of implementing this technique is that it can be solve in just one step, as it is not iterative, and there is no need to apply feature scaling and $\alpha$. However, the computation of $(\textbf{X}^{T}X)^{-1}$ may be very complex and slow, as it requires a large computational cost. Besides that, it can also occur that $\textbf{X}^{T}X$ may be noninvertible. This might be due to redundant features, which are very close related, or too many features. In this last case, regularization can be applied. 
 
-
-
-%%% PERFORMANCE: analysis of j cost plot and add: The most common practice when implementing the algorithm is to try different values of $\alpha$ in order to see which results in a better performance. 
-
-
-%%%%Feature scaling must be added??? or is already explained in data analysis
-
-
-
-
-
-
-
-
-
-%the inverse requires a large computational cost, so gd is better
-
-
-
-
+On the other side, the method of GD explained throughout this section presents some interesting advantages with respect to the previously one. Even though it is necessary to set a learning rate and feature scaling, the method requires less computational effort to be executed iteratively than to compute the inverse. Therefore, the execution time will be lower and it will converge faster. Additionally, as long as the hypothesis fulfills the properties of a convex or non-convex function, the algorithm will always find a minimum and, consequently, a solution. 
 
 
 \section{Neural Network}
@@ -741,6 +735,10 @@ The other defining characteristic of a neural network is the activation function
 
 \chapter{Conclusions}\label{ch:conclusions}
 In the last years, a better estimation of the pseudorange errors and an increase in the use of GNSS on urban environments has raised the interest in multipath prediction. Due to its nature, this source of error is usually really difficult to estimate as it depends a lot on the obstacles that a signal may encounter. 
+
+Neural networks are a type of Machine Learning algorithms that have been showing very good performance in various diverse fields during the last two decades. Nonetheless, they have not been very used in GNSS applications. In this project, we have implemented a neural network that intends to estimate the impact of multipath error in GNSS pseudoranges from a set of features that could be obtained in real-time from a vehicle with the right equipment.
+
+% ...
 
 
 \clearpage

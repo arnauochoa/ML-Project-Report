@@ -194,42 +194,91 @@ This data can come from various sources and have a more or less close relation t
 The different measurements that are used to make the predictions are called features. In general, a larger quantity of different features will lead to a better performance of the estimations because there is more information about the variables that affect the outcome variable (i.e. the variable to estimate). Nonetheless, it is important that these features are related to the variable that we want to estimate, otherwise they will only add noise in the predicted value. For example, it does not make sense to use the stock market of a certain company when trying to predict the presence of multipath of a GNSS signal. Also, it is important that the features used are not directly related between them and that they add new information to the estimation. A counterexample of this would be to use both the Carrier-to-Noise-Density Ratio and the Signal-to-Noise Ratio, since these variables are directly related by the bandwidth of the receiver. Another important thing to consider is that a larger number of features requires a larger dataset of examples to perform the regression. Within this project, we also have an additional restriction in terms of selecting the features to use: these features should be accessible from a receiver at during navigation, so that the resulting model obtained from the regression could be applicable in a receiver to estimate the effect of multipath.
 
 \section{Selection and analysis of features}
-The execution of this project has been subject to the availability of data. At the very beginning we generated a random dataset which was used to implement the first regression method. Later on, we were provided of a dataset with few features, that was used to develop the algorithms and gain some knowledge of the data treatment. Nonetheless, this first dataset is of sufficient interest to include some of its results in this document. Afterwards, we obtained a second dataset which included more features and has been used to obtain the final concluding results. Both of these datasets come from measurements that were carried before the start of this project. These measurements were obtained with a van in various measurement campaigns in the city of Toulouse.
+The execution of this project has been subject to the availability of data. At the very beginning we generated a random dataset which was used to implement the first regression method. Later on, we were provided of a dataset with few features, that was used to develop the algorithms and gain some knowledge of the data treatment. Nonetheless, this first dataset is of sufficient interest to include some of its results in this document. Afterwards, we obtained a second dataset which included more features and has been used to obtain the final concluding results. Both of these datasets come from measurements that were carried before the start of this project. These measurements were obtained with a van in various measurement campaigns in the city of Toulouse. This van was equipped with a wide-lens camera facing up, which was used to obtain data of the surroundings.
 
 \subsection{Simple dataset}
-We started the project with the outcome variable being the error in a pseudorange measurement, which had been estimated in post-processing. At this first stage we only had two features: the Carrier-to-Noise-Density Ratio (CN0) measured by the receiver and the estimated elevation of the satellite relative to the receiver. The purpose of this first stage was to develop and test the different regression algorithms, until final the data was available. Also, even though the pseudorange error includes other errors than the produced by the multipath, it is a value that is very related to the error we want to estimate in this project, so it was more interesting for us to familiarize with the characteristics of the data we were dealing with.
+We started the project with the outcome variable being the error in a pseudorange measurement, which had been estimated in post-processing. At this first stage we only had two features: the Carrier-to-Noise-Density Ratio (CN0) measured by the receiver and the estimated elevation of the satellite relative to the receiver. The purpose of this first stage was to develop and test the different regression algorithms, until final the data was available. Also, even though the pseudorange error includes other errors than the produced by the multipath, it is a value that is very related to the error we want to estimate in this project, so it was more interesting for us to familiarize with the characteristics of the data we were dealing with. This dataset contains more than 8.2 million useful examples.
 
+Figures \ref{fig:pre_cn0} and \ref{fig:pre_elev} show the distribution of the pseudorange error as a function of the CN0 and Elevation, respectively. The graphs on the top show the actual data examples represented as points. Given the large amount of measurements, which makes more difficult to distinguish the actual distribution, we also show the 0.5 and 0.95 quantiles of the data. This quantiles are calculated at intervals of one unit of the independent variable, or feature. The graphs on the bottom of the figures represent the amount of examples for each value of the CN0 or elevation, respectively.
 
+In these figures we can observe that both these features are representative for trying to estimate the pseudorange error. In both cases, the PR error decreases when the value of the features increases. This is expected, since the CN0 and the elevation of the satellite are very related to the quality of the signal. Nonetheless, we can observe that the examples in the dataset are mostly located in medium and high values of the CN0. This may lead to a low performance of the estimation algorithm for cases when the CN0 is low, since the data we have for those cases is less representative.
+
+\begin{figure}[hb]
+  \centering
+  \begin{minipage}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{data-analysis/pre_cn0.png}
+    \caption{Distribution of the pseudorange error as a function of the CN0}
+    \label{fig:pre_cn0}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{data-analysis/pre_elev.png}
+    \caption{Distribution of the pseudorange error as a function of the elevation}
+    \label{fig:pre_elev}
+  \end{minipage}
+\end{figure}
+
+These two features seem to be good indicators of the presence of large errors in the pseudorange measurement. Nonetheless, we know that the pseudorange measurement is affected by many other error sources. Therefore we do not expect to estimate with a good accuracy the pseudorange errors having only these two measurements. Nonetheless, we believe that it will be interesting to analyze the performance of the different algorithms that are studied within this project.
 
 
 
 \subsection{Complete dataset}
-The second and the main dataset that we use in this project is more complete. This dataset includes the multipath error as the outcome variable, instead of the whole pseudorange error that was used in the first dataset. This multipath error is estimated using an isolation method that tries to estimate all the other error sources in the pseudorange to obtain only the remaining multipath error \cite{matera_chatacterization_2019}. This second dataset also includes more features, which are described next.
+The second and the main dataset that we use in this project is more complete. This dataset includes the multipath error as the outcome variable, instead of the whole pseudorange error that was used in the first dataset. This multipath error is estimated using an isolation method that tries to estimate all the other error sources in the pseudorange to obtain only the remaining multipath error \cite{matera_chatacterization_2019}. This second dataset also includes more features, which are presented next.
 
 \begin{itemize}
     \item \textbf{CN0:} Carrier-to-Noise-Density Ratio of the signal.
     \item \textbf{Elevation:} Elevation of the satellite relative to the receiver.
     \item \textbf{Relative azimuth:} Azimuth of the satellite relative to the vehicle's heading.
-    \item \textbf{MTHL:} Maximum topographic height on the right side of the vehicle
+    \item \textbf{MTHL:} Maximum topographic height on the left side of the vehicle.
+    \item \textbf{MTHR:} Maximum topographic height on the right side of the vehicle.
 \end{itemize}
 
+Figures \ref{fig:mpn_cn0} to \ref{fig:mpn_daz} represent the distribution of the multipath error with respect to the different features in this dataset. As we observer in the previous dataset, the CN0 and elevation features are also representatives of the multipath error. The new features regarding the topography data also show a correlation with the multipath error (see Figures  \ref{fig:mpn_mthl} and \ref{fig:mpn_mthr}). This is the expected because an scenario with taller buildings leads to higher multipath errors due to a larger amount of reflections. Finally, the differential azimuth also seems to be correlated with the multipath error. Figure \ref{fig:mpn_daz} shows that the multipath error is larger when the satellites is located at both sides of the vehicle, i.e. around 90 and 270 degrees. This is also an expected behavior because the larger obstacles will be usually located at the sides of the vehicle instead of at the front or back, where there is the road.
 
+After this analysis, we expect that the use of this features should improve the accuracy in the estimation of the multipath error, with respect to other simpler methods.
 
-% Introduction about the data we are using
-%   Two stages in terms of data:
-%       First we used Pseudo-range Error, CN0 and elevation to develop the algorithms and get familiar with (data?). Also, the other data was not available yet.
-%       Later, we obtained more data and we predict the actual multipath error, which has been estimated **explain a little bit how and cite their paper**. We have more features -> we expect to have a better prediction
+\begin{figure}[hb]
+  \centering
+  \begin{minipage}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{data-analysis/mpn_cn0.png}
+    \caption{Distribution of the multipath error as a function of the CN0}
+    \label{fig:mpn_cn0}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{data-analysis/mpn_elev.png}
+    \caption{Distribution of the multipath error as a function of the elevation}
+    \label{fig:mpn_elev}
+  \end{minipage}
+\end{figure}
 
-% Data preparation
-%   remove outliers
-%   remove invalid data (CN0 = 0, nan)
-%   
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{data-analysis/mpn_maxtopol.png}
+    \caption{Distribution of the multipath error as a function of the MTHL}
+    \label{fig:mpn_mthl}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{data-analysis/mpn_maxtopor.png}
+    \caption{Distribution of the multipath error as a function of the MTHR}
+    \label{fig:mpn_mthr}
+  \end{minipage}
+\end{figure}
 
-% Data analysis:
-%   show how y is distributed wrt to different features x. this may give some information about the relevance of those features in the estimation of y. 
-%   explain plots: how x is discretized to show distribution and quantiles
-%   comments about each plot: about expected relevance and so on
-%         
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{data-analysis/mpn_daz.png}
+    \caption{Distribution of the multipath error as a function of the relative azimuth}
+    \label{fig:mpn_daz}
+\end{figure}
+
+\section{Data preparation}
+Before applying a regression algorithm is usually recommended to do some data preparation. First, it is important to check for invalid data and remove it. For both datasets used in this project, we have cleaned the data of examples that had NaN values and other examples that had other invalid values, such as a CN0 of 0 dB-Hz. Also, we have removed the outliers by setting two threshold of [-100, 300] meters as minimum and maximum values for the pseudorange and multipath errors.
+
+Once the datasets are clean of invalid values and outliers, we divide each one of them into 3 subsets. The first is the Training Set and it contains the 60\% of the whole set. This data is the one that is used to obtain the regression parameters with the different algorithms. The second subset is the Validation Set, which contains a 20\% of the remaining data. The data in the Validation Set is used for comparing different configurations of the same algorithm. This is specially useful and recommended when dealing with neural networks \cite{aggarwal_neural_2018}, since it is usually needed to compare between different architectures and configurations. Finally, the last is the Test Set, that contains the remaining 20\% of the data. This set is used as new data to test the performance of the algorithms with unseen examples. This process is usually referred to as \textit{generalization}. The main purpose of this splitting of the data is for the algorithms to generalize \textit{well}, this is obtaining an equivalent performance when dealing with new data than when dealing with the Train Set.
+
 
 %==================================================================================================================
 \chapter{Fitting}\label{ch:fitting}
@@ -406,10 +455,33 @@ The main characteristic of a convex function is that there exists a stationary p
 
 However, the algorithm may encounter a type of functions, also known as non-convex, which presents other minimums (local minima) besides the global minima. So the algorithm may have to deal with multiple minimum points and, therefore, multiple equations to solve, which correspond to a derivative equal to zero for each point. Besides the local minima, there also other points which can fulfill the same premise, so the system of equations can become extremely large. This can result in a serious problem for optimization algorithms, not only in terms of computational efficiency, but also because they can get stuck in a local minima and may never find the global one. In consequence, it is essential to find a solution for the non-convex functions. 
 
-The GD method aims to solve this problem by presenting an intuitive reasoning to find the minimum point of the function. 
-% la logica destras del gd es tantear la inclinacion en el punto que nos encontramos luego nos movemos hacia el punto en el que la pendiente desciende com mayor intensidad para finalmente encontrar el punto minimo. 
-%por tanto primero evaluaamos la inclinacion para localizar la mayor pendiente en la posicion actual, luego avanzamos en esa direccion, luego nos paramos en una nueva posicion y repetimos el proceso  iterativamente hasta convergencia, 
-%lo que vamos a hacer es aprovechar la informacion que nos proporciona el calculo de la derivada para ayudarnos a encontrar los minimos locales, ya que la derivada nos informa de la pendiente de la funcio. 
+The GD method aims to solve this problem by presenting an intuitive reasoning in which it takes advantage of the information provided by the computation of the derivative (the slope) in order to find the local minimums of the function. 
+The idea is to start by evaluating the slope at the current position in order to determine the greatest slope, then move forward in that direction in which the slope is maximum according to the current position and, finally, stop at a new position and evaluate again. This is an iterative process which continues until convergence is reached. 
+
+In a more formal way, the GD computes the partial derivatives of each parameter at a specific point and the values obtained will provide information of the slope in the corresponding axis of each parameter. The set of all the partial derivatives result in a vector that indicates the direction in which the slope increases. This vector is referred to as the gradient $\nabla f$. 
+
+For example, considering two input parameters $\theta_{1}$ and $\theta_{2}$ and the error $e$ as the output, then the gradient expression is as follows:
+
+\begin{equation}
+    \nabla f = \begin{bmatrix}
+                    \pdv{e}{\theta_{1}} \\
+                    \pdv{e}{\theta_{2}} 
+                \end{bmatrix}
+\end{equation}
+
+As the objective is to descent to the minimum point, then $\nabla f$ must be considered negative. 
+
+So, the resulting the computation of the parameters is
+
+\begin{equation}
+    \theta \coloneqq \theta - \alpha \nabla f
+\end{equation}
+
+where $\alpha$ corresponds to the learning rate. This factor measures the magnitude of the gradient's impact on the parameters update at each iteration. It defines the longitude of the step the algorithm takes to advance in a certain direction at each iteration. 
+
+This process is computed iteratively until the algorithm reaches a location where the variation of the cost is low, so the slope is close to zero and it can be assumed that a minimum if found.
+
+It is important to remark that the training parameters are usually initially set at a random point before starting the iteration process.
 
 
 

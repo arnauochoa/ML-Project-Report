@@ -108,6 +108,8 @@
 \newcommand{\ba}{\boldsymbol{a}}
 \newcommand{\bD}{\boldsymbol{D}}
 \newcommand{\x}{\boldsymbol{x}}
+\newcommand{\bX}{\boldsymbol{X}}
+\newcommand{\by}{\boldsymbol{y}}
 \newcommand{\bz}{\boldsymbol{z}}
 \newcommand{\bdelta}{\boldsymbol{\delta}}
 \newcommand{\btheta}{\boldsymbol{\theta}}
@@ -142,9 +144,9 @@
 \newpage
 \begin{abstract}
 \noindent
-
+    Multipath error is one of the major sources of error in GNSS applications, specially when the receiver is located in urban areas. While other error sources can be modeled, such as the ionospheric error, the multipath error is a much more complex parameter to represent. The reason behind this is that it depends significantly on the area surrounding the GNSS receiver's position, which may produce reflections of the signals acquired by the receiver. Those reflections are responsible of the multipath errors present in the pseudorange measurements. Considering the availability of a large data set of topographic information with respect to the receiver used to perform several trajectories, the aim of this project is to model the impact of the errors caused by obstacles located in the vicinity of the receiver in GNSS signals. Predicting multipath errors is such a complex task that can not be performed in the majority of the applications. This project studies the feasibility of estimating the expected magnitude of multipath errors in pseudorange measurements given a number of indicators. To carry out the work, a Gradient Descent algorithm and a Neural Network have been implemented. This last technique uses real data to model the relation between the indicators and the multipath error and allows us to predict the expected multipath error.
+ 
 \end{abstract}
-
 \newpage
 \begin{KeepFromToc}
     \tableofcontents
@@ -156,17 +158,19 @@ Global Navigation Satellite System (GNSS) refers to a constellation of satellite
 
 Satellite-based systems present many advantages with respect to other positioning systems, such that global coverage and long-term accuracy with errors limited to a few meters \cite{groves}, considering a stand-alone standard GNSS receiver. Consequently, this type of navigation systems are being employed in a wide range of applications, not only for positioning purposes, but also to improve traffic flow, assist in civil protection and rescue operations, and research on subjects such that geodesy, meteorology and surveying, among many others \cite{EGSAwebsite}. 
 
-The rising demand of real-time information entiles the use of GNSS in many fields, such as the European railway network. In December 2019, the European Commission invested in the development of a new research project, known as Certifiable Localisation Unit with GNSS  (CLUG) in the railway environment, within the framework of the Horizon 2020 programme. This EU project aims to assess the feasibility of a failsafe on-board multi-sensor localisation unit using GNSS, track maps and a minimal number of reference points \cite{CORDISwebsite}. It will also review the use of an on-board continuous localisation system that provides information on location, speed and other dynamics of the train \cite{CORDISwebsite}. The future purpose is the development of train digitalisation and automation. 
+The rising demand of real-time information entails the use of GNSS in many fields, such as the European railway network. In December 2019, the European Commission invested in the development of a new research project, known as Certifiable Localisation Unit with GNSS  (CLUG) in the railway environment, within the framework of the Horizon 2020 programme. This EU project aims to assess the feasibility of a failsafe on-board multi-sensor localisation unit using GNSS, track maps and a minimal number of reference points \cite{CORDISwebsite}. It will also review the use of an on-board continuous localisation system that provides information on location, speed and other dynamics of the train \cite{CORDISwebsite}. The future purpose is the development of train digitalisation and automation. 
 
 In addition to the coordinate collaboration of multiple railway companies, railway signalling industries and navigation specialists \cite{CORDISwebsite}, part of this project is carried out in the École Nationale de l'Aviation Civile (ENAC). It is proposing to develop an innovate model of the local errors impacting the GNSS receiver. Besides that, ENAC's role consists in helping to develop the end-to-end integrity concept including an assesment of the error and fault models.  
 
 In order to support this work, ENAC is collecting its own data within the complex urban environments that the CLUG project is addressing by using the "Jumpy" research vehicle of the institution.
 
-As part of the work developed by ENAC, this project aims to contribute to the development of different regression techniques to generate a model for the local errors. Concretely, the objective of this project is to develop a regression algorithm capable of estimating the effect of the multipath error from data that can be obtained in real-time. The main goal is to test if this regression can be performed with a Neural Network and how its performance compares to other regression algorithms, namely the fitting tool provided by Matlab\footnote{https://es.mathworks.com/help/curvefit/fit.html} and the Gradient Descent method. Each of them will be further detailed in the following chapters. 
+As part of the work developed by ENAC, this project aims to contribute to the development of different regression techniques to generate a model for the local errors. The objective of this project is to develop a regression algorithm capable of estimating the effect of the multipath error from data that can be obtained in real-time. The multipath error comes from the interference between different copies of the signal that arrive from different paths, usually due to signal reflections. While many techniques can be used to reduce the effect of other types of error, such as differential GNSS \cite{kaplan_understanding_2006}, multipath error is really difficult to predict because it depends a lot on the characteristics of the surroundings of the receiver. This error is more important for applications in urban areas, because the large number of buildings and other obstacles increase the amount of multipath that affects to the final pseudorange measurement. Therefore, high-precision applications are more difficult to implement in this kind of scenario. 
 
-Since Neural Networks techniques are relatively recent, not many applications have been done in the field of GNSS and even less have been proposed for multipath detection. Munin et al. propose the use of convolutional neural networks to estimate the presence of multipath error from an image representation of the raw data obtained from the correlator in \cite{munin_convolutional_2019}. Quan et al. follow another approach in \cite{quan_convolutional_2018}, where they perform classification of the signals in terms of multipath presence applying techniques of feature extraction. In our case, we are using a feedforward neural network to estimate the magnitude of the multipath error in a measured pseudorange from various indicators such as the signal power or the satellite elevation relative to the receiver.
+Concretely, the main goal of the present project is to test if the regression to predict the multipath error can be performed with a Neural Network. Also, we want to now how its performance compares to other regression algorithms, namely the fitting tool provided by MATLAB\textsuperscript{\tiny\textregistered}\footnote{mathworks.com/help/curvefit/fit.html} and the Gradient Descent method. Each one of of these methods will be further detailed in the following chapters. 
 
-In this document we will start in chapter \ref{ch:data_analysis} by analyzing the data that will be later used. There we will also explain how we prepared the data so that it can help the performance of the algorithms and the analysis of the results. Later, in chapter \ref{ch:fitting} we detail the algorithms that we have implemented to perform the regression. The results are shown and analyzed in chapter \ref{ch:results}. Finally, the conclusions are drawn in chapter \ref{ch:conclusions}.
+Since Neural Networks techniques are relatively recent, not many applications have been done in the field of GNSS and even less have been proposed for multipath detection. Munin et al. propose the use of convolutional neural networks to estimate the presence of multipath error from an image representation of the raw data obtained from the receiver's correlator \cite{munin_convolutional_2019}. Quan et al. follow another approach in \cite{quan_convolutional_2018}, where they perform classification of the signals in terms of multipath presence applying techniques of feature extraction. In our case, we are using a feedforward neural network to estimate the magnitude of the multipath error in a measured pseudorange from various indicators such as the signal power or the satellite elevation relative to the receiver.
+
+In this document we will begin introducing chapter \ref{ch:data_analysis} by analyzing the data that will be later used. There we will also explain how we prepared the data so that it can help the performance of the algorithms and the analysis of the results. Later, in chapter \ref{ch:fitting} we detail the algorithms that we have implemented to perform the regression. The results are shown and analyzed in chapter \ref{ch:results}. Finally, the conclusions are drawn in chapter \ref{ch:conclusions}.
 
 %%% todo: resume of what are we going to do mentioning where it is going to be explain:
 %%%% Ex: Throughout this document we will analyse.... blablabla in chapter 1.... sth like this
@@ -190,18 +194,17 @@ In this document we will start in chapter \ref{ch:data_analysis} by analyzing th
 %**** explain the concept of features
 
 % Introduction
-As it has been previously explained, the purpose of this project is to develop a regression method capable of predicting the impact of the multipath on the GNSS measurements. To make these estimations it is important to find the data that can reflect the presence of multipath.
-This data can come from various sources and have a more or less close relation to the actual presence of multipath. To give some examples, this data be related to the received signal, e.g. the received signal's power, to the position of the receiver with respect to the satellites, e.g. the elevation of the satellite, or the surroundings of the receiver, e.g. presence of buildings. 
+As it has been previously explained, the purpose of this project is to develop a regression method capable of predicting the impact of the multipath on the GNSS L1 C/A pseudorange measurements. To make these estimations it is important to find the data that can reflect the presence of multipath. This data can come from various sources and have a more or less close relation to the actual presence of multipath. To give some examples, this data can be related to the received signal, e.g. the received signal's power; to the position of the receiver with respect to the satellites, e.g. the elevation of the satellite; or to the surroundings of the receiver, e.g. presence of buildings. 
 
-The different measurements that are used to make the predictions are called features. In general, a larger quantity of different features will lead to a better performance of the estimations because there is more information about the variables that affect the outcome variable (i.e. the variable to estimate). Nonetheless, it is important that these features are related to the variable that we want to estimate, otherwise they will only add noise in the predicted value. For example, it does not make sense to use the stock market of a certain company when trying to predict the presence of multipath of a GNSS signal. Also, it is important that the features used are not directly related between them and that they add new information to the estimation. A counterexample of this would be to use both the Carrier-to-Noise-Density Ratio and the Signal-to-Noise Ratio, since these variables are directly related by the bandwidth of the receiver. Another important thing to consider is that a larger number of features requires a larger dataset of examples to perform the regression. Within this project, we also have an additional restriction in terms of selecting the features to use: these features should be accessible from a receiver at during navigation, so that the resulting model obtained from the regression could be applicable in a receiver to estimate the effect of multipath.
+The different measurements that are used to make the predictions are called features. In general, a larger quantity of different features will lead to a better performance of the estimations because there is more information about the factors that affect the outcome variable (i.e. the variable to estimate). Nonetheless, it is important that these features are related to the variable that we want to estimate, otherwise they will only add noise in the predicted value. For example, it does not make sense to use the stock market of a certain company when trying to predict the presence of multipath in a GNSS signal. Also, it is important that the features used are not directly related between them and that they add new information to the estimation. A counterexample of this would be to use both the Carrier-to-Noise-Density Ratio and the Signal-to-Noise Ratio, since these variables are directly related by the bandwidth of the receiver. Another important thing to consider is that a larger number of features requires a larger dataset of examples to perform the regression. Within this project, we also have an additional restriction in terms of selecting the features to use: these features should be accessible from a receiver during navigation, so that the resulting model obtained from the regression could be applicable in real-time to estimate the effect of multipath in a receiver.
 
 \section{Selection and analysis of features}
-The execution of this project has been subject to the availability of data. At the very beginning we generated a random dataset which was used to implement the first regression method. Later on, we were provided of a dataset with few features, that was used to develop the algorithms and gain some knowledge of the data treatment. Nonetheless, this first dataset is of sufficient interest to include some of its results in this document. Afterwards, we obtained a second dataset which included more features and has been used to obtain the final concluding results. Both of these datasets come from measurements that were carried before the start of this project. These measurements were obtained with a van in various measurement campaigns in the city of Toulouse. This van was equipped with a wide-lens camera facing up, which was used to obtain data of the surroundings.
+The execution of this project has been subject to the availability of data. At the very beginning we generated a random dataset which was used to implement the first regression method. Later on, we were provided of a dataset with few features, that was used to develop the algorithms and gain some knowledge of the data treatment. Nonetheless, this first dataset is of sufficient interest to include some of its results in this document. Afterwards, we obtained a second dataset which included more features and has been used to obtain the final concluding results. Both of these datasets come from measurements that were carried before the start of this project. These measurements were obtained with a van in various measurement campaigns in the city of Toulouse. This van was equipped with a wide-lens camera facing up, which was used to obtain topographic data of the surroundings.
 
 \subsection{Simple dataset}
-We started the project with the outcome variable being the error in a pseudorange measurement, which had been estimated in post-processing. At this first stage we only had two features: the Carrier-to-Noise-Density Ratio (CN0) measured by the receiver and the estimated elevation of the satellite relative to the receiver. The purpose of this first stage was to develop and test the different regression algorithms, until final the data was available. Also, even though the pseudorange error includes other errors than the produced by the multipath, it is a value that is very related to the error we want to estimate in this project, so it was more interesting for us to familiarize with the characteristics of the data we were dealing with. This dataset contains more than 8.2 million useful examples.
+We started the project with the outcome variable being the error in a pseudorange measurement, which had been estimated in post-processing \cite{matera_chatacterization_2019}. At this first stage we only had two features: the Carrier-to-Noise-Density Ratio (CN0) measured by the receiver and the estimated elevation of the satellite relative to the receiver. The purpose of this first stage was to develop and test the different regression algorithms, until final the data was available. Also, even though the pseudorange error includes other errors than the produced by the multipath, it is a value that is very related to the error we want to estimate in this project, so it was more interesting for us to familiarize with the characteristics of the data we were dealing with. This dataset contains more than 8.2 million useful examples.
 
-Figures \ref{fig:pre_cn0} and \ref{fig:pre_elev} show the distribution of the pseudorange error as a function of the CN0 and Elevation, respectively. The graphs on the top show the actual data examples represented as points. Given the large amount of measurements, which makes more difficult to distinguish the actual distribution, we also show the 0.5 and 0.95 quantiles of the data. This quantiles are calculated at intervals of one unit of the independent variable, or feature. The graphs on the bottom of the figures represent the amount of examples for each value of the CN0 or elevation, respectively.
+Figures \ref{fig:pre_cn0} and \ref{fig:pre_elev} show the distribution of the pseudorange error as a function of the CN0 and Elevation, respectively. The graphs on the top show the actual data examples represented as points. Given the large amount of measurements, which makes more difficult to distinguish the actual distribution, we also show the 0.5 and 0.95 quantiles of the data. This quantiles are calculated at intervals of one unit of the independent variable, or feature. The graphs on the bottom of the figures represent the amount of examples for each discretized value of the CN0 or elevation, respectively.
 
 In these figures we can observe that both these features are representative for trying to estimate the pseudorange error. In both cases, the PR error decreases when the value of the features increases. This is expected, since the CN0 and the elevation of the satellite are very related to the quality of the signal. Nonetheless, we can observe that the examples in the dataset are mostly located in medium and high values of the CN0. This may lead to a low performance of the estimation algorithm for cases when the CN0 is low, since the data we have for those cases is less representative.
 
@@ -220,7 +223,7 @@ In these figures we can observe that both these features are representative for 
   \end{minipage}
 \end{figure}
 
-These two features seem to be good indicators of the presence of large errors in the pseudorange measurement. Nonetheless, we know that the pseudorange measurement is affected by many other error sources. Therefore we do not expect to estimate with a good accuracy the pseudorange errors having only these two measurements. Nonetheless, we believe that it will be interesting to analyze the performance of the different algorithms that are studied within this project.
+These two features seem to be good indicators of the presence of large errors in the pseudorange measurement, which is also reflected in the noisy behavior of the data in the plots. Nonetheless, we know that the pseudorange measurement is affected by many other error sources. Therefore we do not expect to estimate with a good accuracy the pseudorange errors having only these two measurements. Nonetheless, we believe that it will be interesting to analyze the performance of the different algorithms that are studied within this project.
 
 
 
@@ -272,16 +275,16 @@ The second and the main dataset that we use in this project is more complete. Th
     \label{fig:mpn_daz}
 \end{figure}
 
-Figures \ref{fig:mpn_cn0} to \ref{fig:mpn_daz} represent the distribution of multipath error with respect to the different features in this dataset. As we observed in the previous dataset, the CN0 and elevation features are also representatives of the multipath error. Additionally, the new features regarding the topography data also show a correlation with the multipath error (see Figures  \ref{fig:mpn_mthl} and \ref{fig:mpn_mthr}). This is the expected because an scenario with taller buildings leads to higher multipath errors due to a larger amount of reflections. Finally, the differential azimuth also seems to be correlated with the multipath error. Figure \ref{fig:mpn_daz} shows that the multipath error is larger when satellites are located at both sides of the vehicle, i.e. around 90 and 270 degrees. This is also an expected behavior because the larger obstacles will be usually located at the sides of the vehicle instead of at the front or back, where there is the road.
+Figures \ref{fig:mpn_cn0} to \ref{fig:mpn_daz} represent the distribution of multipath error with respect to the different features in this dataset. As we observed in the previous dataset, the CN0 and elevation features are also representative of the multipath error. Additionally, the new features regarding the topography data also show a correlation with the multipath error (see Figures  \ref{fig:mpn_mthl} and \ref{fig:mpn_mthr}). This is the expected because an scenario with taller buildings leads to higher multipath errors due to a larger amount of reflections. Finally, the differential azimuth also seems to be correlated with the multipath error. Figure \ref{fig:mpn_daz} shows that the multipath error is larger when satellites are located at both sides of the vehicle, i.e. around 90 and 270 degrees. This is also an expected behavior because the larger obstacles will be usually located at the sides of the vehicle instead of at the front or back, where there is the road.
 
 After this analysis, we expect that the addition of this features into the algorithm will improve the accuracy in the estimation of the multipath error, with respect to other simpler methods.
 
 
 
 \section{Data preparation}\label{DataPrep}
-Before applying a regression algorithm is usually recommended to do some data preparation. First, it is important to check for invalid data and remove it. For both datasets used in this project, we have cleaned the data of examples that had NaN values and other examples that had other invalid values, such as a CN0 of 0 dB-Hz. Also, we have removed the outliers by setting two threshold of [-100, 300] meters as minimum and maximum values for the pseudorange and multipath errors.
+Before applying a regression algorithm, it is usually recommended to prepare the data. First, it is important to check for invalid data and remove it. For both datasets used in this project, we have cleaned the data of examples that had NaN values and other examples that had other invalid values, such as a CN0 of 0 dB-Hz. Also, we have removed the outliers by setting two threshold of [-100, 300] meters as minimum and maximum values for the pseudorange and multipath errors.
 
-Once the datasets are clean of invalid values and outliers, we divide each one of them into 3 subsets. The first is the Training Set and it contains the 60\% of the whole set. This data is the one that is used to obtain the regression parameters with the different algorithms. The second subset is the Validation Set, which contains a 20\% of the remaining data. The data in the Validation Set is used for comparing different configurations of the same algorithm. This is specially useful and recommended when dealing with neural networks \cite{aggarwal_neural_2018}, since it is usually needed to compare between different architectures and configurations. Finally, the last is the Test Set, that contains the remaining 20\% of the data. This set is used as new data to test the performance of the algorithms with unseen examples. This process is usually referred to as \textit{generalization}. The main purpose of this splitting of the data is for the algorithms to generalize \textit{well}, this is obtaining an equivalent performance when dealing with new data than when dealing with the Training Set.
+Once the datasets are clean of invalid values and outliers, we divide each one of them into 3 subsets. The first is the Training Set and it contains the 60\% of the whole set. This data is the one that is used to obtain the regression parameters with the different algorithms. The second subset is the Validation Set, which contains a 20\% of the remaining data. The data in the Validation Set is used for comparing different configurations of the same algorithm. This is specially useful and recommended when dealing with neural networks \cite{aggarwal_neural_2018}, since it is usually needed to compare between different architectures and configurations. Finally, the last is the Test Set, that contains the remaining 20\% of the data. This set is used as new data to test the performance of the algorithms with unseen examples. This process is usually referred to as \textit{generalization}. The main purpose of this splitting of the data is for the algorithms to generalize \textit{well}, this means obtaining an equivalent performance when dealing with new data than when dealing with the Training Set.
 
 Finally, the last step in the data preparation is the \textit{feature scaling}. Two of the regression algorithms that have been implemented, namely the gradient descent and the neural network, require having features with similar magnitudes, usually they accept up to a power of ten between features. A more detailed explanation for this necessity is detailed later in chapter \ref{ch:fitting} but the main reason is that having features with different orders of magnitude usually hinders the convergence of the algorithms. The feature scaling is performed by normalizing the features as
 
@@ -312,34 +315,34 @@ The reality we live is extremely complicated, therefore it is crucial to define 
 
 Throughout this project, regression models have been considered in order to estimate the distribution of the errors present in the aforementioned features. This section focuses on nonlinear regression of the mean and standard deviation (STD) of the Multipath Error (PRE) as a function of elevation and Carrier-to-Noise (CN0) by using the Curve Fitting Toolbox\textsuperscript{\tiny\texttrademark} software developed for MATLAB\textsuperscript{\tiny\textregistered}. The aim of using this estimation technique is to provide a first intuition about the error modelling of the data initially provided. In addition, this fitting is a tool used to provide a reference of the resulting error model in order to compare the performance with other methods. Thus, the algorithms implemented can be validated as it was assumed that the results must be improved using more advanced techniques, such as Gradient Descent (GD) or Neural Networks (NN), which are able to generate the error model automatically only providing the dataset. 
 
-The main idea of the regression method explained in this section is to define a cost function which characterizes the relation between two or more variables, so it can be used to predict the output cost of a certain input value even if it is not include in the given dataset. There exist many techniques to accomplish this goal, nonetheless, we will focus on the Least Squares (LS) method, which will be detailed further on. The core of this algorithm consists in minimizing the sum squared of the errors between the observed data and the prediction made by our model for the same points. By squaring the errors, the algorithm penalizes the worst points, those that present larger errors given that the predicted value is much further from the observed point. As a result, we obtain a combination of parameters which minimizes the cost function, so it represents the best relation (fit) between the input and output variables in order to obtain the lowest errors. 
+The main idea of the regression method explained in this section is to define a cost function which characterizes the relation between two or more variables, so it can be used to predict the output cost of a certain input value, even if it is not included in the given dataset. There exist many techniques to accomplish this goal, nonetheless, we will focus on the Least Squares (LS) method, which will be detailed further on. The core of this algorithm consists in minimizing the sum squared of the errors between the observed data and the prediction made by our model for the same points. By squaring the errors, the algorithm penalizes the worst points, those that present larger errors given that the predicted value is much further from the observed point. As a result, we obtain a combination of parameters which minimizes the cost function, so it represents the best relation (fit) between the input and output variables in order to obtain the lowest errors. 
 
 %define a cost function which depicts the existing relationship between two or multiple variables and allows us to predict the value of the output variable even for input values that are not contained in the dataset 
 
 The Curve Fitting Toolbox\textsuperscript{\tiny\texttrademark} includes a set of functions and utilities which allow to perform a regression by fitting a curve or surface to the data through linear and nonlinear models, or custom equations \cite{MathWorksRegression}. In consequence, fitting requires to define a parametric model which establishes a relation between a set of training data and the output variable using a number of coefficients, so that the output continuous-valued parameter can be predicted. 
 
-Fitting a curve or a surface mainly depends on the number of features available. Thus, the measurement model is build in accordance with the number of features. In our case, there are two possible options: selecting one or two features. As a result, the algorithm fits a curve when one feature is selected (univariate nonlinear regression), otherwise it fits a surface (multivariate regression).
+Fitting a curve or a surface mainly depends on the number of features available. Thus, the measurement model is build in accordance with the number of features. In our case, there are two possible options: selecting one or two features. As a result, the algorithm fits a curve when one feature is selected (univariate nonlinear regression), otherwise it fits a surface (bivariate regression).
 
 As we mentioned before, this software uses the Least Squares (LS) regression method to fit the data, which consists in obtaining the best estimator by minimizing the sum of squared residuals. For this fitting, two different nonlinear measurements models are considered: polynomial and exponential. 
 
 Given a general nonlinear function $h$ to represent the measurement model for one feature, such that
 \begin{equation}
-    y = h(x,p) + \epsilon
+    y = h_\theta(x) + \epsilon
 \end{equation}
-where $y$ is the output variable, $x$ is the input variable, $p$ corresponds to the coefficients of the model and $\epsilon$ corresponds to the error. $h$ may be also referred to as \textit{hypothesis}. Consequently, from the general model, it is possible to go into detail with respect to the aforementioned nonlinear models. 
+where $y$ is the output variable, $x$ is the input variable, $\theta$ corresponds to the coefficients of the model and $\epsilon$ corresponds to the error. $h_\theta(x)$ may be also referred to as \textit{hypothesis}. Consequently, from the general model, it is possible to go into detail with respect to the aforementioned nonlinear models. 
 
 On one side, a polynomial measurement model for a single feature is assumed, such that
 \begin{equation}
-    y_k = \sum\limits_{i=i}^{n+1} p_{i}x^{n+1-i},  \;\;\mbox{for}\; k = 1,...,M
+    y_k = \sum\limits_{i=i}^{n+1} \theta_{i}x^{n+1-i},  \;\;\mbox{for}\; k = 1,...,M
 \end{equation}
 
-where $n+1$ is the order of the polynomial, which indicates the number of coefficient to be fit, and $n$ is the degree of the polynomial, which gives the highest power of the predictor variable. In addition, $x = [x_1,...,x_N]$ is the set of N know inputs, $y = [y_1,...,y_M]$ is the set of M observations and $p = [p_1,...,p_N]$ corresponds to the coefficient estimates.
+where $n+1$ is the order of the polynomial, which indicates the number of coefficient to be fit, and $n$ is the degree of the polynomial, which gives the highest power of the predictor variable. In addition, $x = [x_1,...,x_M]^T$ is the set of N known inputs, $y = [y_1,...,y_M]^T$ is the set of M observations and $\theta = [\theta_1,...,\theta_N]^T$ corresponds to the coefficient estimates.
 
 The degree of the polynomial and, thus, the number of coefficients to be estimated may be modified according the problem requirements or needs. 
 An example of the resulting model may be the following
 \begin{equation}
 \begin{split}
-    y_k &= p_{1}x^{2} + p_{2}x + p_3,    \;\;\mbox{for}\; k = 1,...,M
+    y_k &= \theta_{1}x^{2}_k + \theta_{2}x_k + \theta_3,    \;\;\mbox{for}\; k = 1,...,M
 \end{split}
 \end{equation}
 
@@ -350,7 +353,7 @@ The main advantages of polynomial fits include reasonable flexibility for data t
 
 On the other side, it is also presented the one-term exponential measurement model, such that 
 \begin{equation}
-    y_k = p_{1}e^{p_{2}x_{k}},  \;\;\mbox{for}\; k = 1,...,M
+    y_k = \theta_{1}e^{\theta_{2}x_{k}},  \;\;\mbox{for}\; k = 1,...,M
 \end{equation}
 %% Explain why using exponential, advantages? disadvantages?
 
@@ -358,46 +361,46 @@ After introducing the measurements models implemented for one feature, the measu
 
 The nonlinear $h$ can be expressed as a function of two variables:
 \begin{equation}
-    y = h(x_{1},x_{2},p) + \epsilon
+    y = h(x_{1},x_{2},\theta) + \epsilon
 \end{equation}
-where $y$ is the output variable, $x_{1}$ and $x_{2}$ are the features, $p$ corresponds to the coefficients of the model and $\epsilon$ corresponds to the error. 
+where $y$ is the output variable, $x_{1}$ and $x_{2}$ are the features, $\theta$ corresponds to the coefficients of the model and $\epsilon$ corresponds to the error. 
 
 This model can also be further detailed considering the polynomial model. It is important to notice that, in this case, the exponential model is not available for surface fitting in the MATLAB toolbox used. In consequence, the estimation of the mean and STD with two features has been carried out has been carried out using only a polynomial hypothesis.
 
 An example of a polynomial measurement model with two features can be as follows:
 \begin{equation}
 \begin{split}
-    y_k &= p_{00} + p_{10}x_{1} + p_{01}x_{2} + p_{11}x_{1}x_{2} + p_{20}x^{2}_{1} + p_{02}x^{2}_{2},    \;\;\mbox{for}\; k = 1,...,M
+    y_k &= \theta_{0} + \theta_{1}x_{k,1} + \theta_{2}x_{k,2} + \theta_{3}x^{2}_{k,1} + \theta_{4}x_{k,1}x_{k,2} + \theta_{5}x^{2}_{k,2},    \;\;\mbox{for}\; k = 1,...,M
 \end{split}
 \end{equation}
 
 In this case, the toolbox allows to fit a surface using polynomials up to degree 5. 
 
-Once the measurement model is defined, it is time to introduce the main core of the fitting algorithm, which is the nonlinear Least Squares method. As it has been previously stated, the goal of the LS is to minimize the sum of squared residuals $r_k$ (SSR), so that the coefficient estimates $\hat{p}$ are obtained.
+Once the measurement model is defined, it is time to introduce the main core of the fitting algorithm, which is the nonlinear Least Squares method. As it has been previously stated, the goal of the LS is to minimize the sum of squared residuals $r_k$ (SSR), so that the coefficient estimates $\hat{\btheta}$ are obtained.
 \begin{equation}\label{eq:SSR}
-    SSR(p) = \sum\limits_{k=1}^{M}{r}_{k}^{2} = \sum\limits_{k=1}^{M}(y_k - \hat{y}_k)^2 = \sum\limits_{k=1}^{M}(y_k - \sum\limits_{i=i}^{n+1} p_{i}x^{n+1-i})^2
+    SSR(\theta) = \sum\limits_{k=1}^{M}{r}_{k}^{2} = \sum\limits_{k=1}^{M}(y_k - \hat{y}_k)^2 = \sum\limits_{k=1}^{M}(y_k - \sum\limits_{i=i}^{n+1} \theta_{i}x^{n+1-i}_k)^2
 \end{equation}
 
 Equivalently, equation \eqref{eq:SSR} can be expressed in a matrix way:
 \begin{equation}
-    SSR(p) = \sum\limits_{k=1}^{M}(Y - x_{i}p)^2 = (Y - xp)^T(Y - xp)
+    SSR(\theta) = \sum\limits_{k=1}^{M}(y_k - \btheta^T\x_k)^2 = (\by - \btheta^T\bX)^T(\by - \btheta^T\bX)
 \end{equation}
 
-Equation \eqref{eq:SSR} represents the cost function of the model, which gives a good measure of how well the particular model fits the dataset \cite{MachLearnRefined}. In order to obtain the minimum $\hat{p}$, this function must be minimized, which is accomplished by applying differentiation and scaling techniques:
+Equation \eqref{eq:SSR} represents the cost function of the model, which gives a good measure of how well the particular model fits the dataset \cite{MachLearnRefined}. In order to obtain the minimum $\hat{\btheta}$, this function must be minimized, which is accomplished by applying differentiation and scaling techniques:
 \begin{equation}
 \begin{split}
-    \left.-\frac{1}{2}\pdv{(SSR(p))}{p_{j}}\right|_{\substack{\hat{p}}} &= x^{T}(Y - xp) = 0
+    \left.-\frac{1}{2}\pdv{(SSR(p))}{p_{j}}\right|_{\substack{\hat{p}}} &= \bX^{T}(\by - \btheta^T\bX) = 0
 \end{split}
 \end{equation}
 
 The final expression of the estimates is as follows:
 \begin{equation}\label{eq:estimatorLS}
 \begin{split}
-    \hat{p} = (\textbf{X}^{T}\textbf{X})^{-1}\textbf{X}^{T}Y = \textbf{S}Y\\
+    \hat{\btheta} = (\textbf{X}^{T}\textbf{X})^{-1}\textbf{X}^{T}\by = \textbf{S}\by\\
 \end{split}
 \end{equation}
 
-where $\textbf{X}$ is the matrix of features, $\textbf{W}$ corresponds to the weight matrix and $\textbf{S}$ is called generalized inverse or pseudoinverse.
+where $\textbf{X}$ is the matrix of features and $\textbf{S}$ is called generalized inverse or pseudoinverse.
 
 As nonlinear models are more difficult to fit than the linear ones, an iterative approach is required to perform instead of simple matrix techniques \cite{MathWorksRegression}. So, it is necessary to provide an initial estimate of the coefficients, which is set to [0,0] in this case. Hence, the function produces a initial fitted curve for the current set of coefficients. Then, the software adjusts the coefficients and determine whether the fit improves. Finally, it iterates the process until the fit reaches the specified convergence criteria \cite{MathWorksRegression}. 
 
@@ -410,15 +413,15 @@ Due to the weights, defined as $w_{k}$, the expression of the SSR in equation \e
 
 Accordingly, 
 \begin{equation}
-    SSR(p) = (Y - xp)^T\textbf{W}(Y - xp)
+    SSR(p) = (\by - \btheta^T\bX)^T\textbf{W}(\by - \btheta^T\bX)
 \end{equation} 
 
-where $\textbf{W} = \frac{1}{h(x,p)}\textbf{I}$, considering $\textbf{I}$ an identity matrix. 
+where $\textbf{W} = \frac{1}{\hat{\sigma}}\textbf{I}$, considering $\textbf{I}$ an identity matrix. And the standard deviation is estimated by applying the regression algorithm to the estimation residuals, $r_k$.
 
 So, the formulation of the estimates is modified such that
 \begin{equation}\label{eq:estimatorWLS}
 \begin{split}
-    \hat{p} = (\textbf{X}^{T}\textbf{W}\textbf{X})^{-1}\textbf{X}^{T}\textbf{W}Y\\
+    \hat{\btheta} = (\textbf{X}^{T}\textbf{W}\textbf{X})^{-1}\textbf{X}^{T}\textbf{W}\by\\
 \end{split}
 \end{equation}
 
@@ -426,7 +429,7 @@ So, the formulation of the estimates is modified such that
 
 Once the fundamentals of the curve fitting are understood, we can proceed to introduce the structure of the algorithm implemented in order to clarify the steps carried out for the present regression method.
 
-First of all, as it has been mentioned previously, the fitting is conducted in order to obtain the coefficient estimates of the mean ($\mu$) and STD ($\sigma$) of the PRE. To achieve this objective, it is important to differentiate both types fittings. 
+First of all, as it has been mentioned previously, the fitting is conducted in order to obtain the coefficient estimates of the mean ($\mu$) and STD ($\sigma$) of the PRE. To achieve this objective, it is important to differentiate both types of fittings. 
 
 Regarding to the mean fitting, the input parameters of the function correspond to the given features and the observed data points. In this case, the features are the elevation and CN0 and the observed data corresponds to the PRE. The magnitude of the PRE depends on many factors and, among them, the aforementioned ones are present. Hence, both inputs are necessary to perform the LS regression and, therefore, obtaining the output, which corresponds to the estimate of the variable being measured: the mean of the PRE.  
 
@@ -447,16 +450,16 @@ Regarding the RMSE, it represents a measure of the error made by the model in pr
     RMSE = \sqrt{\frac{\sum\limits_{k=1}^{M}{r}_{k}^{2}}{M}} = \sqrt{\frac{\sum\limits_{k=1}^{M}{r}_{k}^{2}}{M}} = \sqrt{\frac{\sum\limits_{k=1}^{M}(y_k - \hat{y}_k)^2}{M}} 
 \end{equation}
 
-This computation is equivalent for the mean and the STD estimation, as well as for the WLS. The only consideration is that the observed values $y$ and predicted ones $\hat{y}$ represent different parameters in each case.  
+This computation is equivalent for the mean and the STD estimation, as well as for the WLS. The only consideration is that the observed values $\by$ and predicted ones $\hat{\by}$ represent different parameters in each case.  
  
-Hence, RMSE is a useful tool to get a measure of the spread of the $y$ values about the predicted $\hat{y}$ values \cite{StanfordRMSE}. As the effect of each error on the RMSE is proportional to the size of the squared error, then larger errors have a disproportional impact on the RMSE, leading to extremely large errors. As a result, RMSE is very sensitive to outliers. In this case, the RMSE is a parameter used to analyze and compare the performance of the different regression models implemented in this project.   
+Hence, RMSE is a useful tool to get a measure of the spread of the $\by$ values about the predicted $\hat{\by}$ values \cite{StanfordRMSE}. As the effect of each error on the RMSE is proportional to the size of the squared error, then larger errors have a disproportional impact on the RMSE, leading to extremely large errors. As a result, RMSE is very sensitive to outliers. In this case, the RMSE is a parameter used to analyze and compare the performance of the different regression models implemented in this project.   
 
 On the other hand, the fitting of the STD carries out the estimation of the error of the observed variables, in this case the PRE, with respect to the features provided. This particularity requires a previous step in comparison with the mean fitting. As the regression is applied to the error of the observed parameter instead of the total value, then the residuals are additionally computed prior to perform the fitting.  
 
 So, the input variable or vector corresponds to:
 \begin{equation}\label{eq:inputstd}
 \begin{split}
-    r_{k,\sigma} = |y_k - \hat{y}_{k,\mu}| = |y_k - h(x_{k},\hat{p}_{k,\mu})| = |y_k - x_{k}p_{k,\mu}|\\
+    r_{k,\sigma} = |y_k - \hat{y}_{k,\mu}| = |y_k - h(x_{k},\hat{p}_{k,\mu})| = |y_k - x_{k}\theta_{k,\mu}|\\
 \end{split}
 \end{equation}
 
@@ -532,16 +535,16 @@ This can be better understood with an example. For instance, given 2 features ($
 From a matrix approach, this is equivalent to express
 \begin{equation}\label{eq:gdHmatrix}
 \begin{split}
-    h_{\theta} = \theta^{T}x\\
+    h_{\theta} = \btheta^{T}\x\\
 \end{split}
 \end{equation}
 
-In this formulation, $x = [x_0,x_1, x_2,...x_n]^{T}$ corresponds to the input features contained in a vector of dimensions $(n+1)x1$ and $\theta$ are the parameters to be estimated contained in a column vector of $(n+1)x1$. $x_0^{(i)}$ is equal to 0 for all the training examples of the set. In consequence, as the number of features and degree of the polynomial increases, more complex hypothesis are obtained.  
+In this formulation, $\x = [x_0,x_1, x_2,...x_n]^{T}$ corresponds to the input features contained in a vector of dimensions $(n+1)\times 1$ and $\btheta$ are the parameters to be estimated contained in a column vector of $(n+1)\times 1$. $x_0^{(i)}$ is equal to 1 for all the training examples of the set. In consequence, as the number of features and degree of the polynomial increases, more complex hypothesis are obtained.  
 
 Once the hypothesis is established, the cost function is defined as
 \begin{equation}\label{eq:gdcost}
 \begin{split}
-    J(\theta) = \frac{\sum\limits_{i=1}^{m} ((\sum\limits_{j=1}^{n}\theta_{j}x_{j}^{(i)}) - y^{(i)})^{2}}{2m} = \frac{\sum\limits_{i=1}^{m}(\theta^{T}x^{(i)} - y^{(i)})^{2}}{2m}\\
+    J(\theta) = \frac{\sum\limits_{i=1}^{m} ((\sum\limits_{j=1}^{n}\theta_{j}x_{j}^{(i)}) - y^{(i)})^{2}}{2m} = \frac{\sum\limits_{i=1}^{m}(\btheta^{T}\x^{(i)} - y^{(i)})^{2}}{2m}\\
 \end{split}
 \end{equation}
 
@@ -550,7 +553,7 @@ where $m$ is the number of training examples, $n$ is the number of features, $x^
 Equation \eqref{eq:gdcost} can also be formulated using matrices such that
 \begin{equation}\label{eq:gdcostmatrix}
 \begin{split}
-    J(\theta) = \frac{(\textbf{X}\theta - y)^{T}(\textbf{X}\theta - y)}{2m}\\
+    J(\btheta) = \frac{(\textbf{X}\btheta - \by)^{T}(\textbf{X}\btheta - \by)}{2m}\\
 \end{split}
 \end{equation}
 where $\textbf{X}$ is the matrix containing all the $x$-term combinations of the hypothesis for every training example.
@@ -568,11 +571,13 @@ where $x_{j}^{(i)}$ is the value of the feature $j$ in the $i$-th training examp
 For the matrix expression of $\theta$, we obtain that
 \begin{equation}\label{eq:gdthetaMatrix}
 \begin{split}
-    \theta_{j} = \theta_{j} - \frac{\alpha}{m}\textbf{X}^T(\textbf{X}\theta - y)\\
+    \theta_{j} = \theta_{j} - \frac{\alpha}{m}\textbf{X}^T(\textbf{X}\btheta - \by)\\
 \end{split}
 \end{equation}
 
-The term $\textbf{X}^T(\textbf{X}\theta - y)$ corresponds to the error between the observed data and our prediction.
+The term $\textbf{X}^T(\textbf{X}\btheta - \by)$ corresponds to the error between the observed data and our prediction.
+
+\subsection{Implementation}
 
 Regarding the implementation of the GD, there are many different ways. However, we decided to implement a \textit{Batch} Gradient Descent, which consists in taking the full set of training examples at each iteration for computational efficiency. This practice has been applied in the code by implementing the matrix formulation previously presented in equations \eqref{eq:gdHmatrix}, \eqref{eq:gdcostmatrix} and \eqref{eq:gdthetaMatrix}.
 
@@ -589,16 +594,80 @@ Figure \ref{fig:scaling_gd} presents two different contour plots for the cost fu
 
 As we have seen, GD algorithm is very sensitive to poor scaling \cite{numericalopt}, so the idea behind \textit{feature scaling} is to define all the features involved in our optimization problem in a similar scale in order to achieve a more balanced solution. The method is based on applying normalization and standardization techniques to the range of the features. This process has been already detailed in section \ref{DataPrep}. 
 
-Once the algorithm is implemented, it is time to validated it and evaluate its performance. To accomplish this, a common practice is to plot the cost function $J(\theta)$ versus the number of iterations. Displaying the evolution of the cost function over time can help to see if the algorithm is working properly and check the convergence of the GD. The number of iterations required to converge can vary depending on the nature of the problem, however, convergence must be met. Therefore, if $J(\theta)$ decreases over iterations, then we can ensure a good performance of the GD. Otherwise, if $J(\theta)$ increases or presents an irregular shape, the GD does not works correctly. Sometimes, this problem can be easily solved by setting a smaller $\alpha$. The most common practice when implementing the algorithm is to try different values of $\alpha$ in order to see which results in a better performance. 
+Once the algorithm is implemented, it is time to validate it and evaluate its performance. To accomplish this, a common practice is to plot the cost function $J(\theta)$ versus the number of iterations. Displaying the evolution of the cost function over time can help to see if the algorithm is working properly and check the convergence of the GD. The number of iterations required to converge can vary depending on the nature of the problem, however, convergence must be met. Therefore, if $J(\theta)$ decreases over iterations, then we can ensure a good performance of the GD. Otherwise, if $J(\theta)$ increases or presents an irregular shape, the GD does not work correctly. Sometimes, this problem can be easily solved by setting a smaller $\alpha$. The most common practice when implementing the algorithm is to try different values of $\alpha$ in order to see which results in a better performance. 
 
-Finally, there is a last point which is important to remark. So far, this project has described two different approaches to solve the same regression problem. The first method, detailed in section \ref{matlabfit}, presented a solution that requires the computation of equation \eqref{eq:estimatorLS}, also referred to as normal equation. The advantage of implementing this technique is that it can be solve in just one step, as it is not iterative, and there is no need to apply feature scaling and $\alpha$. However, the computation of $(\textbf{X}^{T}X)^{-1}$ may be very complex and slow, as it requires a large computational cost. Besides that, it can also occur that $\textbf{X}^{T}X$ may be noninvertible. This might be due to redundant features, which are very close related, or too many features. In this last case, regularization can be applied. 
+Finally, there is a last point which is important to remark. So far, this project has described two different approaches to solve the same regression problem. The first method, detailed in section \ref{matlabfit}, presented a solution that requires the computation of equation \eqref{eq:estimatorLS}, also referred to as normal equation. The advantage of implementing this technique is that it can be solve in just one step, as it is not iterative, and there is no need to apply feature scaling and $\alpha$. However, the computation of $(\bX^{T}\bX)^{-1}$ may be very complex and slow, as it requires a large computational cost. Besides that, it can also occur that $\bX^{T}\bX$ may be noninvertible. This might be due to redundant features, which are very close related, or too many features. In this last case, regularization can be applied. 
 
 On the other side, the method of GD explained throughout this section presents some interesting advantages with respect to the previously one. Even though it is necessary to set a learning rate and feature scaling, the method requires less computational effort to be executed iteratively than to compute the inverse. Therefore, the execution time will be lower and it will converge faster. Additionally, as long as the hypothesis fulfills the properties of a convex or non-convex function, the algorithm will always find a minimum and, consequently, a solution. 
 
+\subsection{Overfitting and Regularization}
 
-\section{Neural Network}
+The problem of overfitting is widely acknowledged in the field of machine learning and it represents one of most critical aspects when implementing learning algorithms. It requires to apply a proper methodology with regard the treatment of the data in order to ensure the algorithm provides a reliable solution of the problem.  
+
+Considering a general polynomial model, three different situations can be distinguished in terms of the behavior of the model with respect to the dataset: underfitting, right fitting and overfitting. 
+
+The first situation, in which the algorithm is facing a problem of underfitting, occurs when the model proposed cannot capture the underlying structure of the dataset and, thus, it is no able to predict accurately enough the training set that is provided. So the hypotheses is not well adapted to the data. Therefore, it can be concluded that the assumption made by the hypothesis about the nature of the data is too conservative. It is necessary to elaborate a more flexible model in order to fit more accurately the examples.
+This problem can be solved by adding more features or increasing the degree of the polynomial. The higher the order of the polynomial model, the more flexibility is given to the algorithm. This results in a better performance because the model can adjust more rigorously to the training examples and the errors of our prediction are much lower. 
+
+On the contrary, the algorithm can suffer the opposite problem, in which the model conducts very accurate predictions with respect to the provided data, however, it is not able to generalize the prediction for new data. This problem is commonly known as overfitting and the idea behind this concept is mainly that the model used by the algorithm is able to identify very well the characteristics of the data so it can adjust to them perfectly. However, it losses the ability to generalize for unseen data causing poor predictions and higher errors. Hence, the main consequence of overfitting is poor performance on the validation dataset. 
+
+The last case refers to a right fitting that represents the desired situation in which the performance of the algorithm is optimal. In this case, the hypothesis proposed is well adapted to the trend of the available data and it is also capable of generalizing in order to predict new data. 
+
+ Overfitting can be present in many different models, especially when there are too many features or there is no causal relation between the features and the target output. Additionally, it can also occur due to a too high-order polynomial model. As the hypothesis is very flexible, it can fit any point. In consequence, the prediction model may be dominated by the noise contained in the data.
+
+In order to develop models more robust in the presence of new data, it is necessary to address the problem of overfitting. The solution is not straightforward, as it depends on the nature of the data and the objective of the algorithm. 
+
+One of the most interesting methods is regularization. It consists in keeping all the features available but modifying the magnitude of $\theta_{j}$ associated to each term of $h_\theta$. In this way, the model preserves the information provided by all the features that contribute to the prediction, without the need to discard any of them. The main idea behind the regularization is to weight the terms forming the hypothesis in order to simplify the expression. 
+
+The higher the value of $\theta_{j}$, the higher the cost of this term in the function. So, those terms that result more costly will be much less considered when computing the minimization of the cost function. Consequently, their impact of in the model will be much more reduced or even they might be neglected. After this process, the expression of $h$ will look smoother and it might be less prone to overffiting.
+
+To carry out the regularization of all $\theta_{j}$ parameters, the algorithm must consider an extra term corresponding to the regularization.
+
+\begin{equation}\label{eq:gdthetaRegul}
+\begin{split}
+    &\mbox{repeat until convergence}\{\\
+    &\theta_{j} \coloneqq \theta_{j}(1 - \alpha\frac{\lambda}{m}) - \frac{\alpha}{m} \sum\limits_{i=1}^{m}(h_{\theta}(x^{(i)}) -  y^{(i)})x_{j}^{(i)}\\
+&\}
+\end{split}
+\end{equation}
+
+The term $\frac{\lambda}{m}\theta_{j}$ performs the regularization. 
+
+The regularization can also be applied to the alternative non-iterative method that uses the normal equation.
+perque el has ficat en bold?
+\begin{equation}\label{eq:estimatorLSRegul}
+\begin{split}
+    \btheta = (\textbf{X}^{T}\textbf{X} + \lambda \textbf{L})^{-1}\textbf{X}^{T}\by\\
+\end{split}
+\end{equation}
+
+where $L = \begin{bmatrix} 
+    0 &  & & & &\\
+     & 1 & & & &\\
+     &  & 1 & & & \\
+     &  & & \ddots & &\\
+     & & & & &  1_{n+1} 
+    \end{bmatrix}$
+    
+By adding the term $\lambda \textbf{L}$, the matrix inside the inverse becomes invertible.
+
+The $\lambda$ parameters must be properly set according to the problem. Otherwise, the algorithm might face the following problems:
+
+\begin{itemize}
+    \item If $\lambda$ is too large, then the hypothesis may be too smooth and lead to underffiting.
+    \item If $\lambda$ is too small, then the hypothesis may be suffer slight variations, which are not sufficient to solve the overfitting problem.
+\end{itemize}
+
+To conclude, it is important to emphasize that adding many features can provide more representative models of the data, however, too many features can lead to overfitting. In addition, regularization can solve overfitting but too much regularization can cause underfitting and even a worse performance of the algorithm. Finally, regularized linear regression is still a convex function, so the GD will still converge to a global minima. 
+
+
+%a model well adjusted to the training data not always generalize well for new data
+
+
+
+\section{Neural network}
 % Introduction
-The concept of Artificial Neural Networks, also known just as neural networks, was first introduced in the early 1940s by McCullock and Pitts, who theorized about a computational model for artificial intelligence which was inspired on the neural networks in the brain \cite{mcculloch_logical_1943}. Later, in 1958, Rosenblatt developed the perceptron which can be considered as the equivalent of a neuron in Artificial Neural Networks \cite{rosenblatt_perceptron_1958}. The perceptron allowed to learn from a set of example data and later perform binary classification of new examples. In 1969 it was demonstrated that perceptrons were incapable of performing non-linear classifications such as performing the logical XOR operation \cite{minsky69perceptrons}. The development of the backpropagation algorithm in 1975 renewed the interest in neural networks because it allowed to train multiple-layer perceptrons \cite{werbos}. These were networks of various neurons that allowed the learning of non-linear functions. Even then, neural networks were rarely used due to the high computational complexity and the large amounts of data that they required. An increase in transistor count and a latter raise in the use of GPUs have bring back to life the neural networks, also the Internet explosion allowed a much easier collection of large amounts of data, which are needed to train neural networks \cite{aggarwal_neural_2018}.
+The concept of Artificial Neural Networks, also known just as neural networks, was first introduced in the early 1940s by McCullock and Pitts, who theorized about a computational model for artificial intelligence which was inspired on the neural networks in the brain \cite{mcculloch_logical_1943}. Later, in 1958, Rosenblatt developed the perceptron which can be considered as the equivalent of a neuron in Artificial Neural Networks \cite{rosenblatt_perceptron_1958}. The perceptron allowed to learn from a set of example data and later perform binary classification of new examples. In 1969 it was demonstrated that perceptrons were incapable of performing non-linear classifications such as performing the logical XOR operation \cite{minsky69perceptrons}. The development of the backpropagation algorithm in 1975 renewed the interest in neural networks because it allowed to train multiple-layer perceptrons \cite{werbos}. These were networks of various neurons that allowed the learning of non-linear functions. Even then, neural networks were rarely used due to the high computational complexity and the large amounts of data that they required. An increase in transistor count and a latter raise in the use of GPUs have bring back to life the neural networks, also the Internet explosion allowed a much easier collection of large amounts of data, which are needed to train these algorithms \cite{aggarwal_neural_2018}.
 
 Lately, neural networks have outperformed other regression algorithms in many complex problems and have also empowered new and unforeseen applications such as vehicle control \cite{BojarskiTDFFGJM16}, image recognition \cite{hijazi2015} or medical diagnosis \cite{AMATO201347}.
 
@@ -609,9 +678,9 @@ The basic element in a neural network is called neuron. A neuron is nothing more
     g(z) = g(\btheta^T\boldsymbol{x})
 \end{equation}
 
-where $\x = [x_0, x_1, x_2, ..., x_n]^T$ are the input values $x_0 = 1$, and $\btheta = [\theta_0, \theta_1, \theta_2, ..., \theta_n]$ are the weights assigned to these input values. The idea of this model is that, given the correct weights to the input values and the right activation function, it will estimate a value $y^{(i)}$ which depends on the input $\boldsymbol{x^{(i)}}$ as $h_\theta(\boldsymbol{x^{(i)}})$. This neuron can be represented with the diagram in Fig. \ref{fig:neuron_diag}. 
+where $\x = [x_0, x_1, x_2, ..., x_n]^T$ are the input values $x_0 = 1$, and $\btheta = [\theta_0, \theta_1, \theta_2, ..., \theta_n]^T$ are the weights assigned to these input values. The idea of this model is that, given the correct weights to the input values and the right activation function, it will estimate a value $y^{(i)}$ which depends on the input $\boldsymbol{x^{(i)}}$ as $h_\theta(\boldsymbol{x^{(i)}})$. This neuron can be represented with the diagram in Fig. \ref{fig:neuron_diag}. 
 
-\begin{figure}[ht]
+\begin{figure}[hbt]
     \centering
     \includegraphics[width=0.7\textwidth]{figures/fitting/neuron_diagram.png}
     \caption{Diagram representation of a neuron}
@@ -620,7 +689,7 @@ where $\x = [x_0, x_1, x_2, ..., x_n]^T$ are the input values $x_0 = 1$, and $\b
 
 In order to find the best weights $\btheta$, the error function is defined as we did in the previous section and it can be minimized with the gradient descent method. As it has been previously mentioned, a single neuron does not work well for complex non-linear processes. To be able to make predictions in those cases, a more complex system is required. 
 
-Neural networks are built by using the outputs of various neurons as the inputs for other neurons, then building layers. The first one is called \textit{input layer}, the last one, \textit{output layer} and the layers in between are usually called \textit{hidden layers}. Usually, a neural network with a high number of layers will be able to perform more complex predictions but it will also take more time to train.
+Neural networks are built by using the outputs of various neurons as the inputs for other neurons, then building layers. The first one is called \textit{input layer}, the last one, \textit{output layer} and the layers in between are typically called \textit{hidden layers}. Usually, a neural network with a high number of layers will be able to perform more complex predictions but it will also take more time to train.
 
 \begin{figure}[ht]
     \centering
@@ -656,7 +725,7 @@ An example of a neural network is shown in Fig. \ref{fig:neural_network_example}
 
 The architecture of a neural network is mainly defined by the number of layers, the number of units in each layer and the activation functions that are used. The number of units of the input and output layers is usually restricted by the characteristics and goals of the application at hand. The number of input nodes is determined by the number of features that are used, since this layer is indeed used to feed the network with data. The number of output units can be larger than one and it is chosen depending on the type of problem that is confronted. For example, a classification problem requires as many output units as classes, so that the output of each unit $k$ represents the probability of the input example to pertain to the class $k$. 
 
-The size of the hidden layers, both in terms of number of layers and number of units per layer, is generally a difficult part in the design of a neural network since there is no direct rule to decide among the different possibilities. Therefore, these are usually chosen by trial and error procedures. On the one hand, having too small hidden layers may lead to underfitting or even the inability of the algorithm to converge. On the other hand, having too large and/or too many hidden layers will increase the computation complexity and may also lead to overfitting \cite{aggarwal_neural_2018}. Nonetheless, a big majority of problems can be faced using a network with one hidden layer \cite{aggarwal_neural_2018}. Actually, it has been shown that a single hidden layer of nonlienar units and a single linear output layer can compute almost any "reasonable" function \cite{hornik_multilayer_1989}. Although this theoretical claim is not always easy to apply because it may require a huge amount of features.
+The size of the hidden layers, both in terms of number of layers and number of units per layer, is generally a difficult part in the design of a neural network since there is no direct rule to decide among the different possibilities. Therefore, these are usually chosen by trial and error procedures. On the one hand, having too small hidden layers may lead to underfitting or even the inability of the algorithm to converge. On the other hand, having too large and/or too many hidden layers will increase the computation complexity and may also lead to overfitting \cite{aggarwal_neural_2018}. Nonetheless, a big majority of problems can be faced using a network with one hidden layer \cite{aggarwal_neural_2018}. Actually, it has been shown that a single hidden layer of nonlienar units and a single linear output layer can compute almost any \textit{reasonable} function \cite{hornik_multilayer_1989}. Although this theoretical claim is not always easy to apply because it may require a huge amount of features.
 
 The choice of the activation cost function is a critical decision in the design of a neural network. Any network with all the activation functions being linear will provide the same results as a Least Squares. In order to obtain more complex behavior, some unlinearities need to be added. To do so, many options of activation functions are proposed. The performanece of these different activation functions also depends on the type of problem that is being faced, but it usually requires some trial and error as well. Next, some examples of activation functions are shown.
 
@@ -692,9 +761,9 @@ where $m$ is the number of examples in the data set, $\lambda$ denotes the regul
 
 To obtain this minimum in $J(\bTheta)$ we use the gradient descent. The problem that we encounter is that, given the very high complexity of this cost function, we virtually cannot compute its gradient. This is where the backpropagation algorithm appears. This method allows to obtain the equivalent of the gradient for a neural network in a much more efficient way.
 
-This algorithm starts with a random initialization of the parameters $\bTheta$. Then, it performs forward propagation with an example $(\x^{(i)}, y^{(i)})$ to obtain an estimation $h_\Theta(\x^{(i)})$. Once the estimation is obtained, the error of $h_\Theta(\x^{(i)})$ with respect to $y^{(i)}$ is obtained. This error is then "propagated" back in the network, so that we obtain a representation of the contribution of each node to the final error. This process is then repeated for each one of the examples given in the training set. The exact procedure of this algorithm is detailed next.
+This algorithm starts with a random initialization of the parameters $\bTheta$. Then, it performs forward propagation with an example $(\x^{(i)}, y^{(i)})$ to obtain an estimation $h_\Theta(\x^{(i)})$. Once the estimation is obtained, the error of $h_\Theta(\x^{(i)})$ with respect to $y^{(i)}$ is obtained. This error is then \textit{propagated} back in the network, so that we obtain a representation of the contribution of each node to the final error. This process is then repeated for each one of the examples given in the training set. The exact procedure of this algorithm is detailed next.
 
-Given a training set $\set{(\x^{(1)}, y^{(1)}), (\x^{(2)}, y^{(2)}), ... (\x^{(m)}, y^{(m)})}$
+Given a training set $\set{(\x^{(1)}, y^{(1)}), (\x^{(2)}, y^{(2)}), ... (\x^{(m)}, y^{(m)})}$:
 
 \begin{enumerate}
     \item Set $\bDelta_{ij}^{(l)} = 0$ , $\forall l, i, j$
@@ -705,7 +774,7 @@ Given a training set $\set{(\x^{(1)}, y^{(1)}), (\x^{(2)}, y^{(2)}), ... (\x^{(m
         \item Calculate $\delta^{(L)} = a^{(L)} - y$
         \item For l from $(L-1)$ to 2:
         \begin{enumerate}[a.]
-            \item $\bdelta^{(l)} = (\bTheta^{(l)})^T\bdelta^{(l+1)} \odot g'(\bz^{(l)})$\footnote{The symbol $\odot$ denotes the Hadamard or element-wise product}
+            \item \textit{Propagate} the error\footnote{The symbol $\odot$ denotes the Hadamard or element-wise product}: $\bdelta^{(l)} = (\bTheta^{(l)})^T\bdelta^{(l+1)} \odot g'(\bz^{(l)})$
         \end{enumerate}
         \item Update $\bDelta^{(l)}$ as $\bDelta^{(l)} := \bDelta^{(l)} + \bdelta^{(l+1)}(\ba^{(l)})^T$
     \end{enumerate}
@@ -720,25 +789,55 @@ The final result that we obtain after the backpropagation algorithm is equivalen
     \bD_{ij}^{(l)} = \pdv{}{\bTheta_{ij}^{(l)}} J(\bTheta)
 \end{equation}
 
-% Overfit / Underfit (here?)
+Once the gradient is obtained, the cost function of the neural network is minimized in order to find the parameters $\bTheta$ that best fit the data. This minimization process is carried out with an optimized function that calculates the gradient descent. This is a library function is called \texttt{fmincg} written by Carl Edward Rasmussen.
+
+Also, in order to speed up the execution of this algorithm we paralelized various process with the MATLAB built-in functions for that purpose\footnote{https://www.mathworks.com/help/parallel-computing/run-code-on-parallel-pools.html}. The backpropagation has been one of the main processes where once paralelization was implemented, the execution time of the algorithm was significantly reduced. Other techniques may be applied to reduce even more the execution time, such as GPU computing, but we didn't have the hardware needed to implement these techniques.
 
 \subsection{Architecture of our neural network}
-Given the nature of the neural networks, there exist an infinity of possibilities when trying to decide the architecture of a network. Nonetheless, it is usually a good practice to start with a simple design and then, if needed, move to more complex configurations. In our case we started with one hidden layer which has the same number of units as the input layer. This design is widely recommended as it has been found to perform well in a large variety of cases. Also, since we are dealing with a linear regression problem we need to have only one unit in the output layer.
+Given the nature of the neural networks, there exist an infinity of possibilities when trying to decide the architecture of a network. Nonetheless, it is usually a good practice to start with a simple design and then, if needed, move to more complex configurations. In our case we started with one hidden layer which has the same number of units as the input layer. This design is widely recommended as it has been found to perform well in a large variety of cases \cite{aggarwal_neural_2018}. Also, since we are dealing with a linear regression problem we need to have only one unit in the output layer.
 
-The other defining characteristic of a neural network is the activation function that is used. On the one hand, we decided to use a ReLU activation function for the units in the hidden layer. This activation function has shown very good performance in linear regression problems. On the other hand, the output layer implements a linear activation function, because the possible output values that we can have for our problem are not bounded.
+The other defining characteristic of a neural network is the activation function that is used. On the one hand, we decided to use a ReLU activation function for the units in the hidden layer. This activation function has shown to be a better choice in most linear regression problems \cite{aggarwal_neural_2018}. On the other hand, the output layer implements a linear activation function. Since we are estimating a value that is not bounded, namely the magnitude of the multipath (or pseudorange) error, we require an output function that is not bounded. In this cases, the output unit is usually selected to be linear \cite{aggarwal_neural_2018}.
+
+As we did for the gradient descent, we are considering the linear and squared polynomial components of the initial features, the ones explained in chapter \ref{ch:data_analysis}. To do so we compute this quadratic components and we introduce them as features in the neural network.
 
 %==================================================================================================================
 
 \chapter{Results} \label{ch:results}
 
+In this chapter we analyze and compare the results of the regression algorithms we presented previously for the two datasets.
+
+\section{Simple dataset}
+Given the large amount of examples we have in this dataset (more than 8.2 examples), the Training Set is too large to run the neural network in an assumable amount of time with the hardware we have available. Therefore, we decided to reduce the size of this set to the same size of the more complete one. Next, we present the results of the different methods with this first data
+
+\subsection{MATLAB fitting}
+
+\subsection{Gradient descent}
+
+\subsection{Neural network}
+
+
+\section{Complete dataset}
+\subsection{MATLAB fitting}
+
+\subsection{Gradient descent}
+
+\subsection{Neural network}
+
+
 %=================================================================================================================================================
 
-\chapter{Conclusions}\label{ch:conclusions}
+\chapter{Conclusions and future work}\label{ch:conclusions}
+\section{Conclusions}
 In the last years, a better estimation of the pseudorange errors and an increase in the use of GNSS on urban environments has raised the interest in multipath prediction. Due to its nature, this source of error is usually really difficult to estimate as it depends a lot on the obstacles that a signal may encounter. 
 
 Neural networks are a type of Machine Learning algorithms that have been showing very good performance in various diverse fields during the last two decades. Nonetheless, they have not been very used in GNSS applications. In this project, we have implemented a neural network that intends to estimate the impact of multipath error in GNSS pseudoranges from a set of features that could be obtained in real-time from a vehicle with the right equipment.
 
 % ...
+
+\section{Future work}
+As we have seen, neural networks provide a large amount of possible configurations. After the results obtained in this project, we think that it would be interesting to try more complex architectures that could find new relationships between the features and the multipath error. Also, we believe that many new features can be added. For simplicity reasons, we represent now the topographic data obtained from the camera as two single values. Nonetheless, a lot more information is comprised in the images taken by the camera so its information could be represented as more than two features which we think may increase the performance of the algorithm. Apart from this, other features may be included, such as the Code-Minus-Carrier, the variation of the Carrier-to-Noise-Density Ratio, and many others that may be obtained.
+
+These new implementations and the larger amount of data needed to deal with them will lead to an increase in the computational complexity, which translates to a longer time of execution. Therefore, we also believe that some techniques should be applied to speed up the algorithm. Although we are currently implementing paralelization, we are not making use of GPU hardware. A future upgrade that implements GPU computing would make the algorithm to run significantly faster.
 
 
 \clearpage
